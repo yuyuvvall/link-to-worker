@@ -1,0 +1,27 @@
+@liked-color: #e0245e;
+@unliked-color: #65676b;
+
+.post-actions {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+
+  &__button-group {
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
+  }
+
+  &__count {
+    color: @unliked-color;
+    font-size: 0.875em;
+  }
+
+  &__icon--liked {
+    color: @liked-color;
+  }
+
+  &__icon--unliked {
+    color: @unliked-color;
+  }
+}
