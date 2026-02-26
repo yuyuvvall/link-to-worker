@@ -1,1 +1,1 @@
-{"root":["./src/index.ts","./src/helloworld/helloworld.stories.tsx","./src/helloworld/helloworld.tsx","./src/helloworld/index.ts"],"version":"5.9.3"}
+{"root":["./src/index.ts","./src/post/index.ts","./src/post/post-actions.tsx","./src/post/post-content.tsx","./src/post/post-header.tsx","./src/post/post-layout.tsx","./src/post/post.stories.tsx","./src/post/post.tsx"],"version":"5.9.3"}

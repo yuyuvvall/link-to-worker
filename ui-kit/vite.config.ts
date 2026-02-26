@@ -22,7 +22,14 @@ export default defineConfig({
       fileName: "ui-kit"
     },
     rollupOptions: {
-      external: ["react", "react-dom", "react/jsx-runtime"],
+      external: [
+        "react", "react-dom", "react/jsx-runtime",
+        "@mui/material", /^@mui\/material\/.*/,
+        "@emotion/react", "@emotion/styled",
+        "@fortawesome/react-fontawesome",
+        "@fortawesome/free-solid-svg-icons",
+        "@fortawesome/fontawesome-svg-core",
+      ],
       output: {
         globals: {
           react: "React",

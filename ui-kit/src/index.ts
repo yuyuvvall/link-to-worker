@@ -1,1 +1,2 @@
-export { HelloWorld } from "./HelloWorld";
+export { Post } from './post'
+export type { PostProps } from './post'
