@@ -1,1 +1,10 @@
-{"root":["./src/index.ts","./src/post/index.ts","./src/post/post-actions.tsx","./src/post/post-content.tsx","./src/post/post-header.tsx","./src/post/post-layout.tsx","./src/post/post.stories.tsx","./src/post/post.tsx"],"version":"5.9.3"}
+{
+  "root": [
+    "./src/index.ts",
+    "./src/post/index.ts",
+    "./src/post/*",
+    "./src/profile-card/index.ts",
+    "./src/profile-card/*"
+  ],
+  "version": "5.9.3"
+}
