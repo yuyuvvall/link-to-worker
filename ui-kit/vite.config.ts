@@ -29,6 +29,7 @@ export default defineConfig({
         "@fortawesome/react-fontawesome",
         "@fortawesome/free-solid-svg-icons",
         "@fortawesome/fontawesome-svg-core",
+        "react-virtuoso",
       ],
       output: {
         globals: {

@@ -1,10 +1,1 @@
-{
-  "root": [
-    "./src/index.ts",
-    "./src/post/index.ts",
-    "./src/post/*",
-    "./src/profile-card/index.ts",
-    "./src/profile-card/*"
-  ],
-  "version": "5.9.3"
-}
+{"root":["./src/index.ts","./src/edit-form/edit-form-actions.tsx","./src/edit-form/edit-form-field.tsx","./src/edit-form/edit-form-group.tsx","./src/edit-form/edit-form-layout.tsx","./src/edit-form/edit-form.stories.tsx","./src/edit-form/edit-form.tsx","./src/edit-form/index.ts","./src/post/index.ts","./src/post/post-actions.tsx","./src/post/post-content.tsx","./src/post/post-header.tsx","./src/post/post-layout.tsx","./src/post/post.stories.tsx","./src/post/post.tsx","./src/posts-list/index.ts","./src/posts-list/posts-list-footer.tsx","./src/posts-list/posts-list-item.tsx","./src/posts-list/posts-list.stories.tsx","./src/posts-list/posts-list.tsx","./src/profile-card/index.ts","./src/profile-card/profile-card-avatar.tsx","./src/profile-card/profile-card-badges.tsx","./src/profile-card/profile-card-banner.tsx","./src/profile-card/profile-card-info.tsx","./src/profile-card/profile-card-layout.tsx","./src/profile-card/profile-card.stories.tsx","./src/profile-card/profile-card.tsx"],"version":"5.9.3"}
