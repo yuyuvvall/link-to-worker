@@ -8,13 +8,13 @@ import AuthService from '../services/auth-service'
 
 const avatarImg = "https://via.placeholder.com/200?text=Avatar"
 
-interface FormData {
+type FormData = {
     photo: FileList
     email: string
     password: string
 }
 
-function RegistrationForm() {
+const RegistrationForm = () => {
     const navigate = useNavigate()
     const { register, handleSubmit, watch } = useForm<FormData>()
     const [imgSrc, setImageSrc] = useState<string>("")

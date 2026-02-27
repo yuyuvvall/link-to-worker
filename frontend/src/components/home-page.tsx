@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthService from '../services/auth-service'
 
-function Home() {
+const HomePage = () => {
     const navigate = useNavigate()
 
     useEffect(() => {
@@ -34,4 +34,4 @@ function Home() {
     )
 }
 
-export default Home
+export default HomePage
