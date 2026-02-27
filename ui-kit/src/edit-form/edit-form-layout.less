@@ -1,0 +1,25 @@
+@edit-form-border: #e0e0e0;
+
+.edit-form-layout {
+  width: 100%;
+  max-width: 43.75em;
+  border-radius: 0.5em;
+  overflow: hidden;
+
+  &__header {
+    padding: 1.25em 1.5em;
+    border-bottom: 0.0625em solid @edit-form-border;
+  }
+
+  &__body {
+    padding: 1.5em;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25em;
+  }
+
+  &__actions {
+    padding: 1em 1.5em;
+    border-top: 0.0625em solid @edit-form-border;
+  }
+}

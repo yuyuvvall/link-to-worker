@@ -1,0 +1,5 @@
+{
+  "name": "link-to-worker",
+  "private": true,
+  "workspaces": ["frontend", "ui-kit"]
+}
