@@ -82,15 +82,6 @@ Collection: posts
   isPublic: boolean
 }
 
-Collection: users
-{
-  _id: ObjectId,
-  username: string,
-  age: number,
-  followers: number,
-  createdAt: Date,
-}
-
 Example 1 – Numeric filter
 
 User:
@@ -240,7 +231,7 @@ Ensure the JSON is strictly valid and can be parsed by JSON.parse().
 
           const validatedResponse = this.validateParsedQuery(parsedResponse);
 
-            return validatedResponse;
+          return validatedResponse;
 
         } catch (error) {
             // Handle different error types
