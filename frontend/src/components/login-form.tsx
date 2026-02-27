@@ -4,12 +4,12 @@ import { GoogleLogin } from '@react-oauth/google'
 import type { CredentialResponse } from '@react-oauth/google'
 import AuthService from '../services/auth-service'
 
-interface LoginFormData {
+type LoginFormData = {
     email: string
     password: string
 }
 
-function LoginForm() {
+const LoginForm = () => {
     const navigate = useNavigate()
     const { register, handleSubmit } = useForm<LoginFormData>()
 
