@@ -1,9 +1,9 @@
 import express from 'express'
-import Post from '../controllers/post'
+import PostController from '../controllers/post'
 import authMiddleware from '../common/auth_middleware'
 
 const router = express.Router()
 
-router.get('/', authMiddleware, Post.getPosts)
+router.post('/aiSearch', PostController.freeSearchPosts.bind(PostController))
 
 export default router
