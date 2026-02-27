@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCamera } from '@fortawesome/free-solid-svg-icons'
+import { faEdit } from '@fortawesome/free-solid-svg-icons'
 import './profile-card-banner.less'
 
 export type ProfileCardBannerProps = {
@@ -25,7 +25,7 @@ const ProfileCardBanner = ({ imageUrl, onEditClick }: ProfileCardBannerProps) =>
           onClick={onEditClick}
           aria-label="Edit banner"
         >
-          <FontAwesomeIcon icon={faCamera} />
+          <FontAwesomeIcon icon={faEdit} />
         </button>
       )}
     </div>
