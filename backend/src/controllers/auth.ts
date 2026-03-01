@@ -95,7 +95,7 @@ const login = async (req: Request, res: Response) => {
             refreshToken,
             user: {
                 _id: user._id,
-                email: user.email
+                email: user.email,
             }
         })
     } catch {
@@ -207,7 +207,6 @@ const googleLogin = async (req: Request, res: Response) => {
         }
 
         const email = payload.email
-        const name = payload.name || email
         const picture = payload.picture
 
         let user = await User.findOne({ email }).select('+tokens +password')
@@ -244,7 +243,7 @@ const googleLogin = async (req: Request, res: Response) => {
         return res.status(200).json({
             accessToken,
             refreshToken,
-            user: { _id: user._id, email: user.email, photo: user.photo, name }
+            user: { _id: user._id, email: user.email, photo: user.photo }
         })
     } catch {
         return res.status(500).json({ message: 'Something went wrong' })
