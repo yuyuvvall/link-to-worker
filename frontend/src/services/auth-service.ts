@@ -63,7 +63,6 @@ const googleLogin = (credential: string) => {
     return { request, cancel: () => controller.abort() }
 }
 
-// return the current authenticated user or throw if not logged in
 const getCurrentUser = async (): Promise<UserResponse> => {
     const controller = new AbortController()
     try {
@@ -73,7 +72,6 @@ const getCurrentUser = async (): Promise<UserResponse> => {
         )
         return res.data
     } finally {
-        // aborting after request ensures no lingering signal
         controller.abort()
     }
 }
