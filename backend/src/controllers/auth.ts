@@ -193,7 +193,7 @@ const googleLogin = async (req: Request, res: Response) => {
         const { credential } = req.body
 
         if (!credential) {
-            return sendError(res, 'Credential is required')
+            return res.status(400).json({ message: 'Credential is required' })
         }
 
         const ticket = await client.verifyIdToken({
@@ -202,20 +202,18 @@ const googleLogin = async (req: Request, res: Response) => {
         })
 
         const payload = ticket.getPayload()
-        if (!payload || !payload.email) {
-            return sendError(res, 'Invalid Google token')
+        if (!payload?.email) {
+            return res.status(401).json({ message: 'Invalid Google token' })
         }
 
         const email = payload.email
         const name = payload.name || email
         const picture = payload.picture
 
-        let user = await User.findOne({ email })
+        let user = await User.findOne({ email }).select('+tokens +password')
 
         if (!user) {
-            const randomPassword = Math.random().toString(36).slice(-8)
-            const salt = await bcrypt.genSalt(10)
-            const hashedPassword = await bcrypt.hash(randomPassword, salt)
+            const hashedPassword = await bcrypt.hash(Math.random().toString(36).slice(-8), 10)
 
             user = await User.create({
                 email,
@@ -224,23 +222,32 @@ const googleLogin = async (req: Request, res: Response) => {
             })
         }
 
+        if (!process.env.ACCESS_TOKEN_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
+            return res.status(500).json({ message: 'Server configuration error' })
+        }
+
         const accessToken = jwt.sign(
             { _id: user._id },
-            process.env.ACCESS_TOKEN_SECRET as string,
-            { expiresIn: process.env.JWT_TOKEN_EXPIRATION } as SignOptions
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: process.env.JWT_TOKEN_EXPIRATION || '15m' } as SignOptions
         )
 
         const refreshToken = jwt.sign(
             { _id: user._id },
-            process.env.REFRESH_TOKEN_SECRET as string
+            process.env.REFRESH_TOKEN_SECRET,
+            { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION || '7d' } as SignOptions
         )
 
         user.tokens.push(refreshToken)
         await user.save()
 
-        return res.status(200).send({ accessToken, refreshToken })
-    } catch (err) {
-        return sendError(res, (err as Error).message)
+        return res.status(200).json({
+            accessToken,
+            refreshToken,
+            user: { _id: user._id, email: user.email, photo: user.photo, name }
+        })
+    } catch {
+        return res.status(500).json({ message: 'Something went wrong' })
     }
 }
 
