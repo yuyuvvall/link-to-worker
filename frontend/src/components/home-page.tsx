@@ -1,29 +1,40 @@
-import { useEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthService from '../services/auth-service'
 
 const HomePage = () => {
     const navigate = useNavigate()
+    const [loading, setLoading] = useState(true)
+    const calledRef = useRef(false)
 
     useEffect(() => {
-        const accessToken = localStorage.getItem('accessToken')
-        if (!accessToken) {
-            navigate('/login')
+        if (calledRef.current) return
+        calledRef.current = true
+
+        const checkAuth = async () => {
+            try {
+                await AuthService.getCurrentUser()
+            } catch {
+                navigate('/login')
+            } finally {
+                setLoading(false)
+            }
         }
+
+        checkAuth()
     }, [navigate])
 
     const handleLogout = async () => {
         try {
-            const { request } = AuthService.authLogout()
-            await request
+            await AuthService.authLogout()
         } catch (err) {
             console.error(err)
         } finally {
-            localStorage.removeItem('accessToken')
-            localStorage.removeItem('refreshToken')
             navigate('/login')
         }
     }
+
+    if (loading) return <p className="text-center mt-4">Loading...</p>
 
     return (
         <div className="vstack gap-2 col-md-6 mx-auto mt-4">

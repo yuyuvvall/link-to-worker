@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
@@ -14,14 +14,30 @@ const LoginForm = () => {
     const navigate = useNavigate()
     const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>()
     const [loginError, setLoginError] = useState<string | null>(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [checking, setChecking] = useState(true)
+
+    useEffect(() => {
+        const check = async () => {
+            try {
+                await AuthService.getCurrentUser()
+                navigate('/home', { replace: true })
+            } catch {
+            } finally {
+                setChecking(false)
+            }
+        }
+        check()
+    }, [navigate])
+
+    if (checking) return <p className="text-center mt-4">Loading...</p>
 
     const onSubmit = async (data: LoginFormData) => {
         setLoginError(null)
+        setIsSubmitting(true)
         try {
             const { request } = AuthService.authLogin(data)
-            const res = await request
-            localStorage.setItem('accessToken', res.data.accessToken)
-            localStorage.setItem('refreshToken', res.data.refreshToken)
+            await request
             navigate('/home')
         } catch (err: any) {
             if (err.response?.data?.message) {
@@ -29,21 +45,24 @@ const LoginForm = () => {
             } else {
                 setLoginError('Something went wrong. Please try again.')
             }
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
     const onGoogleSuccess = async (credentialResponse: CredentialResponse) => {
         setLoginError(null)
+        setIsSubmitting(true)
         try {
             if (credentialResponse.credential) {
                 const { request } = AuthService.googleLogin(credentialResponse.credential)
-                const res = await request
-                localStorage.setItem('accessToken', res.data.accessToken)
-                localStorage.setItem('refreshToken', res.data.refreshToken)
+                await request
                 navigate('/home')
             }
-        } catch (err: any) {
+        } catch {
             setLoginError('Google login failed. Please try again.')
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
@@ -62,6 +81,7 @@ const LoginForm = () => {
                         type="text"
                         className={`form-control ${errors.email ? 'is-invalid' : ''}`}
                         placeholder="Email"
+                        disabled={isSubmitting}
                     />
                     {errors.email && <div className="invalid-feedback">{errors.email.message}</div>}
 
@@ -70,10 +90,13 @@ const LoginForm = () => {
                         type="password"
                         className={`form-control ${errors.password ? 'is-invalid' : ''}`}
                         placeholder="Password"
+                        disabled={isSubmitting}
                     />
                     {errors.password && <div className="invalid-feedback">{errors.password.message}</div>}
 
-                    <button type="submit" className="btn btn-outline-secondary">Login</button>
+                    <button type="submit" className="btn btn-outline-secondary" disabled={isSubmitting}>
+                        {isSubmitting ? 'Logging in...' : 'Login'}
+                    </button>
                 </div>
             </form>
 

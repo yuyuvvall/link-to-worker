@@ -19,10 +19,23 @@ const RegistrationForm = () => {
     const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>()
     const [imgSrc, setImageSrc] = useState<string>("")
     const [formError, setFormError] = useState<string | null>(null)
+    const [checking, setChecking] = useState(true)
     const photoRef: { current: HTMLInputElement | null } = { current: null }
     const { ref, ...rest } = register('photo')
-
     const [photo] = watch(["photo"])
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                await AuthService.getCurrentUser()
+                navigate('/home', { replace: true })
+            } catch { }
+            finally {
+                setChecking(false)
+            }
+        }
+        checkAuth()
+    }, [navigate])
 
     useEffect(() => {
         if (photo && photo[0]) {
@@ -35,16 +48,14 @@ const RegistrationForm = () => {
         photoRef.current?.click()
     }
 
-    // Proper upload function
     const uploadImage = async (file: File): Promise<string> => {
         try {
             const formData = new FormData()
             formData.append("file", file)
-            const res = await apiClient.post('/file', formData) // server handles filename
+            const res = await apiClient.post('/file', formData, { withCredentials: true })
             return res.data.url
-        } catch (err) {
-            console.error("Image upload failed:", err)
-            return avatarImg // fallback
+        } catch {
+            return avatarImg
         }
     }
 
@@ -63,14 +74,12 @@ const RegistrationForm = () => {
             })
             await request
 
-            // Auto-login after registration
             const { request: loginRequest } = AuthService.authLogin({
                 email: data.email,
                 password: data.password
             })
-            const loginRes = await loginRequest
-            localStorage.setItem('accessToken', loginRes.data.accessToken)
-            localStorage.setItem('refreshToken', loginRes.data.refreshToken)
+            await loginRequest
+
             navigate('/home')
         } catch (err: any) {
             if (err.response?.data?.message) {
@@ -81,10 +90,11 @@ const RegistrationForm = () => {
         }
     }
 
+    if (checking) return <p className="text-center mt-4">Loading...</p>
+
     return (
         <div className="vstack gap-2 col-md-6 mx-auto mt-4">
             <h1 className="d-flex justify-content-center">Registration Form</h1>
-
             {formError && <div className="alert alert-danger text-center">{formError}</div>}
 
             <form onSubmit={handleSubmit(onSubmit)}>
@@ -108,10 +118,7 @@ const RegistrationForm = () => {
                     {...rest}
                     type="file"
                     name="photo"
-                    ref={(e) => {
-                        ref(e)
-                        photoRef.current = e
-                    }}
+                    ref={(e) => { ref(e); photoRef.current = e }}
                     style={{ display: 'none' }}
                     accept="image/*"
                 />
