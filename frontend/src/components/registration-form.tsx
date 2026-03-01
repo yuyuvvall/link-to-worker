@@ -16,8 +16,9 @@ type FormData = {
 
 const RegistrationForm = () => {
     const navigate = useNavigate()
-    const { register, handleSubmit, watch } = useForm<FormData>()
+    const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>()
     const [imgSrc, setImageSrc] = useState<string>("")
+    const [formError, setFormError] = useState<string | null>(null)
     const photoRef: { current: HTMLInputElement | null } = { current: null }
     const { ref, ...rest } = register('photo')
 
@@ -52,11 +53,13 @@ const RegistrationForm = () => {
     }
 
     const onSubmit = async (data: FormData) => {
+        setFormError(null)
         try {
             let imgUrl = ""
             if (data.photo && data.photo[0]) {
                 imgUrl = await uploadImage(data.photo[0])
             }
+
             const { request } = AuthService.authRegister({
                 email: data.email,
                 password: data.password,
@@ -73,14 +76,23 @@ const RegistrationForm = () => {
             localStorage.setItem('accessToken', loginRes.data.accessToken)
             localStorage.setItem('refreshToken', loginRes.data.refreshToken)
             navigate('/home')
-        } catch (err) {
-            console.error(err)
+        } catch (err: any) {
+            if (err.response?.data?.message) {
+                setFormError(err.response.data.message)
+            } else {
+                setFormError('Something went wrong. Please try again.')
+            }
         }
     }
 
     return (
         <div className="vstack gap-2 col-md-6 mx-auto mt-4">
             <h1 className="d-flex justify-content-center">Registration Form</h1>
+
+            {formError && (
+                <div className="alert alert-danger text-center">{formError}</div>
+            )}
+
             <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="d-flex justify-content-center position-relative" style={{ width: "200px", margin: "0 auto" }}>
                     <div style={{ height: "200px", width: "200px" }}>
@@ -109,8 +121,22 @@ const RegistrationForm = () => {
                     accept="image/*"
                 />
                 <div className="vstack gap-2 mt-3">
-                    <input {...register("email", { required: true })} type="text" className="form-control" placeholder="Email" />
-                    <input {...register("password", { required: true })} type="password" className="form-control" placeholder="Password" />
+                    <input
+                        {...register("email", { required: "Email is required" })}
+                        type="text"
+                        className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                        placeholder="Email"
+                    />
+                    {errors.email && <div className="invalid-feedback">{errors.email.message}</div>}
+
+                    <input
+                        {...register("password", { required: "Password is required" })}
+                        type="password"
+                        className={`form-control ${errors.password ? 'is-invalid' : ''}`}
+                        placeholder="Password"
+                    />
+                    {errors.password && <div className="invalid-feedback">{errors.password.message}</div>}
+
                     <button type="submit" className="btn btn-outline-secondary">Register</button>
                 </div>
             </form>
