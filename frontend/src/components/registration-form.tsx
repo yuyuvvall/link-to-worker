@@ -27,35 +27,31 @@ const RegistrationForm = () => {
     useEffect(() => {
         if (photo && photo[0]) {
             const newUrl = URL.createObjectURL(photo[0])
-            if (newUrl !== imgSrc) {
-                setImageSrc(newUrl)
-            }
+            setImageSrc(newUrl)
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [photo])
 
     const handlePhotoClick = () => {
         photoRef.current?.click()
     }
 
-    const uploadImage = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-            const formData = new window.FormData()
+    // Proper upload function
+    const uploadImage = async (file: File): Promise<string> => {
+        try {
+            const formData = new FormData()
             formData.append("file", file)
-            apiClient.post('/file?file=123.jpeg', formData, {
-                headers: { 'Content-Type': 'image/jpeg' }
-            }).then(res => {
-                resolve(res.data.url)
-            }).catch(err => {
-                reject(err)
-            })
-        })
+            const res = await apiClient.post('/file', formData) // server handles filename
+            return res.data.url
+        } catch (err) {
+            console.error("Image upload failed:", err)
+            return avatarImg // fallback
+        }
     }
 
     const onSubmit = async (data: FormData) => {
         setFormError(null)
         try {
-            let imgUrl = ""
+            let imgUrl = avatarImg
             if (data.photo && data.photo[0]) {
                 imgUrl = await uploadImage(data.photo[0])
             }
@@ -89,20 +85,17 @@ const RegistrationForm = () => {
         <div className="vstack gap-2 col-md-6 mx-auto mt-4">
             <h1 className="d-flex justify-content-center">Registration Form</h1>
 
-            {formError && (
-                <div className="alert alert-danger text-center">{formError}</div>
-            )}
+            {formError && <div className="alert alert-danger text-center">{formError}</div>}
 
             <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="d-flex justify-content-center position-relative" style={{ width: "200px", margin: "0 auto" }}>
                     <div style={{ height: "200px", width: "200px" }}>
-                        {imgSrc ? (
-                            <img src={imgSrc} alt="Preview" className="img-fluid"
-                                style={{ height: "200px", width: "200px", objectFit: "cover", borderRadius: "50%" }} />
-                        ) : (
-                            <img src={avatarImg} alt="Preview" className="img-fluid"
-                                style={{ height: "200px", width: "200px", objectFit: "cover", borderRadius: "50%" }} />
-                        )}
+                        <img
+                            src={imgSrc || avatarImg}
+                            alt="Preview"
+                            className="img-fluid"
+                            style={{ height: "200px", width: "200px", objectFit: "cover", borderRadius: "50%" }}
+                        />
                     </div>
                     <div className="position-absolute bottom-0 end-0">
                         <button type="button" className="btn" onClick={handlePhotoClick}>
@@ -110,7 +103,9 @@ const RegistrationForm = () => {
                         </button>
                     </div>
                 </div>
-                <input {...rest}
+
+                <input
+                    {...rest}
                     type="file"
                     name="photo"
                     ref={(e) => {
@@ -120,6 +115,7 @@ const RegistrationForm = () => {
                     style={{ display: 'none' }}
                     accept="image/*"
                 />
+
                 <div className="vstack gap-2 mt-3">
                     <input
                         {...register("email", { required: "Email is required" })}
@@ -140,6 +136,7 @@ const RegistrationForm = () => {
                     <button type="submit" className="btn btn-outline-secondary">Register</button>
                 </div>
             </form>
+
             <p className="text-center mt-2">
                 Already have an account? <a href="/login">Login</a>
             </p>
