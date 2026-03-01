@@ -17,43 +17,63 @@ export interface LoginData {
     password: string
 }
 
-export interface TokenResponse {
-    accessToken: string
-    refreshToken: string
+export interface UserResponse {
+    _id: string
+    email: string
+    photo?: string
 }
 
 const authRegister = (registration: RegisterData) => {
     const controller = new AbortController()
-    const request = apiClient.post<RegistrationResponseData>("/auth/register",
+    const request = apiClient.post<RegistrationResponseData>(
+        "/auth/register",
         registration,
-        { signal: controller.signal })
+        { signal: controller.signal }
+    )
     return { request, cancel: () => controller.abort() }
 }
 
 const authLogin = (loginData: LoginData) => {
     const controller = new AbortController()
-    const request = apiClient.post<TokenResponse>("/auth/login",
+    const request = apiClient.post<UserResponse>(
+        "/auth/login",
         loginData,
-        { signal: controller.signal })
+        { signal: controller.signal }
+    )
     return { request, cancel: () => controller.abort() }
 }
 
 const authLogout = () => {
     const controller = new AbortController()
-    const refreshToken = localStorage.getItem('refreshToken')
-    const request = apiClient.post("/auth/logout", {}, {
-        headers: { Authorization: `JWT ${refreshToken}` },
-        signal: controller.signal
-    })
+    const request = apiClient.post(
+        "/auth/logout",
+        {},
+        { signal: controller.signal }
+    )
     return { request, cancel: () => controller.abort() }
 }
 
 const googleLogin = (credential: string) => {
     const controller = new AbortController()
-    const request = apiClient.post<TokenResponse>("/auth/google",
+    const request = apiClient.post<UserResponse>(
+        "/auth/google",
         { credential },
-        { signal: controller.signal })
+        { signal: controller.signal }
+    )
     return { request, cancel: () => controller.abort() }
 }
 
-export default { authRegister, authLogin, authLogout, googleLogin }
+const getCurrentUser = async (): Promise<UserResponse> => {
+    const controller = new AbortController()
+    try {
+        const res = await apiClient.get<UserResponse>(
+            "/auth/me",
+            { signal: controller.signal }
+        )
+        return res.data
+    } finally {
+        controller.abort()
+    }
+}
+
+export default { authRegister, authLogin, authLogout, googleLogin, getCurrentUser }

@@ -8,7 +8,7 @@ let app: Express
 
 const testUser = {
     email: 'test@test.com',
-    password: 'testpassword'
+    password: 'testpassword',
 }
 
 let accessToken: string
@@ -35,7 +35,7 @@ describe('Auth Tests', () => {
             .post('/auth/register')
             .send(testUser)
         expect(response.status).toBe(200)
-    })
+        expect(response.body.email).toBe(testUser.email)})
 
     test('3. Login', async () => {
         const response = await request(app)
@@ -44,6 +44,7 @@ describe('Auth Tests', () => {
         expect(response.status).toBe(200)
         expect(response.body.accessToken).toBeDefined()
         expect(response.body.refreshToken).toBeDefined()
+        expect(response.body.user.email).toBe(testUser.email)
         accessToken = response.body.accessToken
         refreshToken = response.body.refreshToken
     })
@@ -83,8 +84,8 @@ describe('Auth Tests', () => {
         accessToken = response.body.accessToken
         refreshToken = response.body.refreshToken
 
-        // Store old refresh token for later test
-        ;(global as any).oldRefreshToken = oldRefreshToken
+            // Store old refresh token for later test
+            ; (global as any).oldRefreshToken = oldRefreshToken
     })
 
     test('8. Use new access token', async () => {
