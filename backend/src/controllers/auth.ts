@@ -51,36 +51,52 @@ const login = async (req: Request, res: Response) => {
         const { email, password } = req.body
 
         if (!email || !password) {
-            return sendError(res, 'Email and password are required')
+            return res.status(400).json({ message: 'Invalid email or password' })
         }
 
-        const user = await User.findOne({ email })
+        const user = await User.findOne({ email }).select('+password +tokens')
         if (!user) {
-            return sendError(res, 'Invalid credentials')
+            return res.status(401).json({ message: 'Invalid email or password' })
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password)
         if (!isPasswordValid) {
-            return sendError(res, 'Invalid credentials')
+            return res.status(401).json({ message: 'Invalid email or password' })
+        }
+
+        if (!process.env.ACCESS_TOKEN_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
+            return res.status(500).json({ message: 'Server configuration error' })
         }
 
         const accessToken = jwt.sign(
             { _id: user._id },
-            process.env.ACCESS_TOKEN_SECRET as string,
-            { expiresIn: process.env.JWT_TOKEN_EXPIRATION } as SignOptions
+            process.env.ACCESS_TOKEN_SECRET,
+            {
+                expiresIn: process.env.JWT_TOKEN_EXPIRATION || '15m'
+            } as SignOptions
         )
 
         const refreshToken = jwt.sign(
             { _id: user._id },
-            process.env.REFRESH_TOKEN_SECRET as string
+            process.env.REFRESH_TOKEN_SECRET,
+            {
+                expiresIn: process.env.REFRESH_TOKEN_EXPIRATION || '7d'
+            } as SignOptions
         )
 
         user.tokens.push(refreshToken)
         await user.save()
 
-        return res.status(200).send({ accessToken, refreshToken })
-    } catch (err) {
-        return sendError(res, (err as Error).message)
+        return res.status(200).json({
+            accessToken,
+            refreshToken,
+            user: {
+                _id: user._id,
+                email: user.email
+            }
+        })
+    } catch {
+        return res.status(500).json({ message: 'Something went wrong' })
     }
 }
 
