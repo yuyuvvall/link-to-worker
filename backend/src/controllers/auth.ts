@@ -23,16 +23,15 @@ const register = async (req: Request, res: Response) => {
         const { email, password, photo } = req.body
 
         if (!email || !password) {
-            return sendError(res, 'Email and password are required')
+            return res.status(400).json({ message: 'Email and password are required' })
         }
 
         const existingUser = await User.findOne({ email })
         if (existingUser) {
-            return sendError(res, 'User already exists')
+            return res.status(409).json({ message: 'User already exists' })
         }
 
-        const salt = await bcrypt.genSalt(10)
-        const hashedPassword = await bcrypt.hash(password, salt)
+        const hashedPassword = await bcrypt.hash(password, 10)
 
         const user = await User.create({
             email,
@@ -40,9 +39,13 @@ const register = async (req: Request, res: Response) => {
             photo
         })
 
-        return res.status(200).send(user)
-    } catch (err) {
-        return sendError(res, (err as Error).message)
+        return res.status(201).json({
+            _id: user._id,
+            email: user.email,
+            photo: user.photo
+        })
+    } catch {
+        return res.status(500).json({ message: 'Something went wrong' })
     }
 }
 
