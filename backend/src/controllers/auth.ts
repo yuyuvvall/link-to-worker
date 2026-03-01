@@ -8,14 +8,38 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 type TokenInfo = { _id: string }
 
-const sendError = (res: Response, msg?: string) => {
-    return res.status(400).send({ status: 'fail', message: msg })
+const sendError = (res: Response, status: number, message: string) => {
+    return res.status(status).json({ message })
 }
 
-const getTokenFromRequest = (req: Request): string | null => {
-    const authHeader = req.headers['authorization']
-    if (!authHeader) return null
-    return authHeader.split(' ')[1] || null
+const accessCookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    maxAge: 15 * 60 * 1000
+}
+
+const refreshCookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    maxAge: 7 * 24 * 60 * 60 * 1000
+}
+
+const generateAccessToken = (userId: string) => {
+    return jwt.sign(
+        { _id: userId },
+        process.env.ACCESS_TOKEN_SECRET as string,
+        { expiresIn: process.env.JWT_TOKEN_EXPIRATION || '15m' } as SignOptions
+    )
+}
+
+const generateRefreshToken = (userId: string) => {
+    return jwt.sign(
+        { _id: userId },
+        process.env.REFRESH_TOKEN_SECRET as string,
+        { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION || '7d' } as SignOptions
+    )
 }
 
 const register = async (req: Request, res: Response) => {
@@ -23,12 +47,12 @@ const register = async (req: Request, res: Response) => {
         const { email, password, photo } = req.body
 
         if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required' })
+            return sendError(res, 400, 'Email and password are required')
         }
 
         const existingUser = await User.findOne({ email })
         if (existingUser) {
-            return res.status(409).json({ message: 'User already exists' })
+            return sendError(res, 409, 'User already exists')
         }
 
         const hashedPassword = await bcrypt.hash(password, 10)
@@ -45,7 +69,7 @@ const register = async (req: Request, res: Response) => {
             photo: user.photo
         })
     } catch {
-        return res.status(500).json({ message: 'Something went wrong' })
+        return sendError(res, 500, 'Something went wrong')
     }
 }
 
@@ -54,147 +78,106 @@ const login = async (req: Request, res: Response) => {
         const { email, password } = req.body
 
         if (!email || !password) {
-            return res.status(400).json({ message: 'Invalid email or password' })
+            return sendError(res, 400, 'Invalid email or password')
         }
 
         const user = await User.findOne({ email }).select('+password +tokens')
         if (!user) {
-            return res.status(401).json({ message: 'Invalid email or password' })
+            return sendError(res, 401, 'Invalid email or password')
         }
 
-        const isPasswordValid = await bcrypt.compare(password, user.password)
-        if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Invalid email or password' })
+        const isValid = await bcrypt.compare(password, user.password)
+        if (!isValid) {
+            return sendError(res, 401, 'Invalid email or password')
         }
 
-        if (!process.env.ACCESS_TOKEN_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
-            return res.status(500).json({ message: 'Server configuration error' })
-        }
-
-        const accessToken = jwt.sign(
-            { _id: user._id },
-            process.env.ACCESS_TOKEN_SECRET,
-            {
-                expiresIn: process.env.JWT_TOKEN_EXPIRATION || '15m'
-            } as SignOptions
-        )
-
-        const refreshToken = jwt.sign(
-            { _id: user._id },
-            process.env.REFRESH_TOKEN_SECRET,
-            {
-                expiresIn: process.env.REFRESH_TOKEN_EXPIRATION || '7d'
-            } as SignOptions
-        )
+        const accessToken = generateAccessToken(user._id.toString())
+        const refreshToken = generateRefreshToken(user._id.toString())
 
         user.tokens.push(refreshToken)
         await user.save()
 
+        res.cookie('accessToken', accessToken, accessCookieOptions)
+        res.cookie('refreshToken', refreshToken, refreshCookieOptions)
+
         return res.status(200).json({
-            accessToken,
-            refreshToken,
-            user: {
-                _id: user._id,
-                email: user.email,
-            }
+            user: { _id: user._id, email: user.email }
         })
     } catch {
-        return res.status(500).json({ message: 'Something went wrong' })
+        return sendError(res, 500, 'Something went wrong')
     }
 }
 
 const refreshToken = async (req: Request, res: Response) => {
     try {
-        const oldRefreshToken = getTokenFromRequest(req)
+        const oldToken = req.cookies.refreshToken
+        if (!oldToken) return res.sendStatus(401)
 
-        if (!oldRefreshToken) {
-            return res.sendStatus(401)
+        const decoded = jwt.verify(
+            oldToken,
+            process.env.REFRESH_TOKEN_SECRET as string
+        ) as TokenInfo
+
+        const user = await User.findById(decoded._id).select('+tokens')
+        if (!user) return res.sendStatus(403)
+
+        if (!user.tokens.includes(oldToken)) {
+            user.tokens = []
+            await user.save()
+            return res.sendStatus(403)
         }
 
-        jwt.verify(oldRefreshToken, process.env.REFRESH_TOKEN_SECRET as string, async (err, decoded) => {
-            if (err) {
-                return res.status(403).send(err.message)
-            }
+        const newAccessToken = generateAccessToken(user._id.toString())
+        const newRefreshToken = generateRefreshToken(user._id.toString())
 
-            const tokenInfo = decoded as TokenInfo
-            const user = await User.findById(tokenInfo._id)
+        user.tokens = user.tokens.filter(t => t !== oldToken)
+        user.tokens.push(newRefreshToken)
+        await user.save()
 
-            if (!user) {
-                return res.status(403).send('User not found')
-            }
+        res.cookie('accessToken', newAccessToken, accessCookieOptions)
+        res.cookie('refreshToken', newRefreshToken, refreshCookieOptions)
 
-            if (!user.tokens.includes(oldRefreshToken)) {
-                user.tokens = []
-                await user.save()
-                return res.status(403).send('Invalid refresh token')
-            }
-
-            const accessToken = jwt.sign(
-                { _id: user._id },
-                process.env.ACCESS_TOKEN_SECRET as string,
-                { expiresIn: process.env.JWT_TOKEN_EXPIRATION } as SignOptions
-            )
-
-            const newRefreshToken = jwt.sign(
-                { _id: user._id },
-                process.env.REFRESH_TOKEN_SECRET as string
-            )
-
-            const tokenIndex = user.tokens.indexOf(oldRefreshToken)
-            user.tokens[tokenIndex] = newRefreshToken
-            await user.save()
-
-            return res.status(200).send({ accessToken, refreshToken: newRefreshToken })
-        })
-    } catch (err) {
-        return sendError(res, (err as Error).message)
+        return res.sendStatus(200)
+    } catch {
+        return res.sendStatus(403)
     }
 }
 
 const logout = async (req: Request, res: Response) => {
     try {
-        const refreshToken = getTokenFromRequest(req)
-
-        if (!refreshToken) {
-            return res.sendStatus(401)
+        const token = req.cookies.refreshToken
+        if (!token) {
+            res.clearCookie('accessToken')
+            res.clearCookie('refreshToken')
+            return res.sendStatus(200)
         }
 
-        jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET as string, async (err, decoded) => {
-            if (err) {
-                return res.status(403).send(err.message)
-            }
+        const decoded = jwt.verify(
+            token,
+            process.env.REFRESH_TOKEN_SECRET as string
+        ) as TokenInfo
 
-            const tokenInfo = decoded as TokenInfo
-            const user = await User.findById(tokenInfo._id)
-
-            if (!user) {
-                return res.status(403).send('User not found')
-            }
-
-            if (!user.tokens.includes(refreshToken)) {
-                user.tokens = []
-                await user.save()
-                return res.status(403).send('Invalid refresh token')
-            }
-
-            const tokenIndex = user.tokens.indexOf(refreshToken)
-            user.tokens.splice(tokenIndex, 1)
+        const user = await User.findById(decoded._id).select('+tokens')
+        if (user) {
+            user.tokens = user.tokens.filter(t => t !== token)
             await user.save()
+        }
 
-            return res.status(200).send('Logged out successfully')
-        })
-    } catch (err) {
-        return sendError(res, (err as Error).message)
+        res.clearCookie('accessToken')
+        res.clearCookie('refreshToken')
+
+        return res.sendStatus(200)
+    } catch {
+        res.clearCookie('accessToken')
+        res.clearCookie('refreshToken')
+        return res.sendStatus(200)
     }
 }
 
 const googleLogin = async (req: Request, res: Response) => {
     try {
         const { credential } = req.body
-
-        if (!credential) {
-            return res.status(400).json({ message: 'Credential is required' })
-        }
+        if (!credential) return sendError(res, 400, 'Credential is required')
 
         const ticket = await client.verifyIdToken({
             idToken: credential,
@@ -203,57 +186,70 @@ const googleLogin = async (req: Request, res: Response) => {
 
         const payload = ticket.getPayload()
         if (!payload?.email) {
-            return res.status(401).json({ message: 'Invalid Google token' })
+            return sendError(res, 401, 'Invalid Google token')
         }
 
-        const email = payload.email
-        const picture = payload.picture
-
-        let user = await User.findOne({ email }).select('+tokens +password')
+        let user = await User.findOne({ email: payload.email }).select('+tokens')
 
         if (!user) {
-            const hashedPassword = await bcrypt.hash(Math.random().toString(36).slice(-8), 10)
+            const randomPassword = await bcrypt.hash(
+                Math.random().toString(36).slice(-8),
+                10
+            )
 
             user = await User.create({
-                email,
-                password: hashedPassword,
-                photo: picture
+                email: payload.email,
+                password: randomPassword,
+                photo: payload.picture
             })
         }
 
-        if (!process.env.ACCESS_TOKEN_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
-            return res.status(500).json({ message: 'Server configuration error' })
-        }
-
-        const accessToken = jwt.sign(
-            { _id: user._id },
-            process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: process.env.JWT_TOKEN_EXPIRATION || '15m' } as SignOptions
-        )
-
-        const refreshToken = jwt.sign(
-            { _id: user._id },
-            process.env.REFRESH_TOKEN_SECRET,
-            { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION || '7d' } as SignOptions
-        )
+        const accessToken = generateAccessToken(user._id.toString())
+        const refreshToken = generateRefreshToken(user._id.toString())
 
         user.tokens.push(refreshToken)
         await user.save()
 
+        res.cookie('accessToken', accessToken, accessCookieOptions)
+        res.cookie('refreshToken', refreshToken, refreshCookieOptions)
+
         return res.status(200).json({
-            accessToken,
-            refreshToken,
-            user: { _id: user._id, email: user.email, photo: user.photo }
+            user: {
+                _id: user._id,
+                email: user.email,
+                photo: user.photo
+            }
         })
     } catch {
-        return res.status(500).json({ message: 'Something went wrong' })
+        return sendError(res, 500, 'Something went wrong')
     }
 }
+
+const getCurrentUser = async (req: Request, res: Response) => {
+    try {
+        const token = req.cookies.accessToken
+        if (!token) return res.sendStatus(401)
+
+        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as { _id: string }
+        const user = await User.findById(decoded._id)
+        if (!user) return res.sendStatus(404)
+
+        return res.json({
+            _id: user._id,
+            email: user.email,
+            photo: user.photo
+        })
+    } catch (err) {
+        return res.sendStatus(403)
+    }
+}
+
 
 export default {
     register,
     login,
     refreshToken,
     logout,
-    googleLogin
+    googleLogin,
+    getCurrentUser
 }
