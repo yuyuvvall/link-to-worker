@@ -5,7 +5,6 @@ import { uploadFile } from '../controllers/file'
 
 const router = express.Router()
 
-// Configure Multer storage
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'public/')
@@ -18,7 +17,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage })
 
-// Generic file upload route
 router.post('/', upload.single('file'), uploadFile)
 
 export default router
