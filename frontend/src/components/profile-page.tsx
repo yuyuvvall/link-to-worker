@@ -73,21 +73,20 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
   useEffect(() => {
     if (initialPosts || !userId) return
 
-    setIsLoadingPosts(true)
-    const { request, cancel } = PostService.getUserPosts(userId)
-    request
-      .then((res) => {
+    const loadPosts = async () => {
+      setIsLoadingPosts(true)
+      try {
+        const { request } = PostService.getUserPosts(userId)
+        const res = await request
         setPostsData(res.data)
         setHasMore(false)
-      })
-      .catch((err) => {
+      } catch (err: unknown) {
         console.error('Failed to load posts', err)
-      })
-      .finally(() => {
+      } finally {
         setIsLoadingPosts(false)
-      })
-
-    return cancel
+      }
+    }
+    loadPosts()
   }, [userId, initialPosts])
 
   const handleLikeClick = useCallback((postId: string) => {
@@ -133,6 +132,7 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
     [],
   )
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleGroupItemAdd = useCallback((_groupName: string) => {
     setEditFormData((prev) => {
       if (!prev) return prev

@@ -46,13 +46,6 @@ const mockPosts: PostData[] = [
   },
 ]
 
-const minimalProfile: UserProfile = {
-  _id: 'user-2',
-  email: 'tamar@example.com',
-  username: 'Tamar Shalom',
-  photo: 'https://i.pravatar.cc/150?u=tamarsh',
-}
-
 const withRouterDecorator = (initialPath: string) => (Story: () => React.JSX.Element) => {
   localStorage.setItem('accessToken', 'mock-token')
   return (
@@ -94,14 +87,6 @@ export const NoPosts: Story = {
 export const LoadingPosts: Story = {
   args: {
     initialProfile: mockProfile,
-    initialPosts: [],
-  },
-}
-
-export const MinimalProfile: Story = {
-  decorators: [withRouterDecorator('/profile/user-2')],
-  args: {
-    initialProfile: minimalProfile,
     initialPosts: [],
   },
 }

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
 import type { CredentialResponse } from '@react-oauth/google'
 import AuthService from '../services/auth-service'
+import { AxiosError } from 'axios'
 
 type LoginFormData = {
     email: string
@@ -22,7 +23,12 @@ const LoginForm = () => {
             try {
                 await AuthService.getCurrentUser()
                 navigate('/home', { replace: true })
-            } catch {
+            } catch (err: unknown) {
+                if (err instanceof AxiosError) {
+                    setLoginError(err.response?.data?.message || 'Something went wrong. Please try again.')
+                } else {
+                    setLoginError('Something went wrong. Please try again.')
+                }
             } finally {
                 setChecking(false)
             }
@@ -39,9 +45,9 @@ const LoginForm = () => {
             const { request } = AuthService.authLogin(data)
             await request
             navigate('/home')
-        } catch (err: any) {
-            if (err.response?.data?.message) {
-                setLoginError(err.response.data.message)
+        } catch (err: unknown) {
+            if (err instanceof AxiosError) {
+                setLoginError(err.response?.data?.message || 'Something went wrong. Please try again.')
             } else {
                 setLoginError('Something went wrong. Please try again.')
             }
