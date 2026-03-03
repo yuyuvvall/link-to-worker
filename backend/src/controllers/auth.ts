@@ -16,14 +16,14 @@ const accessCookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
-    maxAge: 15 * 60 * 1000
+    maxAge: 15 * 60 * 1000 // 15 minutes
 }
 
 const refreshCookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
-    maxAge: 7 * 24 * 60 * 60 * 1000
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 }
 
 const generateAccessToken = (userId: string) => {
@@ -81,7 +81,7 @@ const login = async (req: Request, res: Response) => {
             return sendError(res, 400, 'Invalid email or password')
         }
 
-        const user = await User.findOne({ email }).select('+password +tokens')
+        const user = await User.findOne({ email }).select('+password')
         if (!user) {
             return sendError(res, 401, 'Invalid email or password')
         }
@@ -93,9 +93,6 @@ const login = async (req: Request, res: Response) => {
 
         const accessToken = generateAccessToken(user._id.toString())
         const refreshToken = generateRefreshToken(user._id.toString())
-
-        user.tokens.push(refreshToken)
-        await user.save()
 
         res.cookie('accessToken', accessToken, accessCookieOptions)
         res.cookie('refreshToken', refreshToken, refreshCookieOptions)
@@ -110,29 +107,19 @@ const login = async (req: Request, res: Response) => {
 
 const refreshToken = async (req: Request, res: Response) => {
     try {
-        const oldToken = req.cookies.refreshToken
-        if (!oldToken) return res.sendStatus(401)
+        const token = req.cookies.refreshToken
+        if (!token) return res.sendStatus(401)
 
         const decoded = jwt.verify(
-            oldToken,
+            token,
             process.env.REFRESH_TOKEN_SECRET as string
         ) as TokenInfo
 
-        const user = await User.findById(decoded._id).select('+tokens')
+        const user = await User.findById(decoded._id)
         if (!user) return res.sendStatus(403)
-
-        if (!user.tokens.includes(oldToken)) {
-            user.tokens = []
-            await user.save()
-            return res.sendStatus(403)
-        }
 
         const newAccessToken = generateAccessToken(user._id.toString())
         const newRefreshToken = generateRefreshToken(user._id.toString())
-
-        user.tokens = user.tokens.filter(t => t !== oldToken)
-        user.tokens.push(newRefreshToken)
-        await user.save()
 
         res.cookie('accessToken', newAccessToken, accessCookieOptions)
         res.cookie('refreshToken', newRefreshToken, refreshCookieOptions)
@@ -143,35 +130,10 @@ const refreshToken = async (req: Request, res: Response) => {
     }
 }
 
-const logout = async (req: Request, res: Response) => {
-    try {
-        const token = req.cookies.refreshToken
-        if (!token) {
-            res.clearCookie('accessToken')
-            res.clearCookie('refreshToken')
-            return res.sendStatus(200)
-        }
-
-        const decoded = jwt.verify(
-            token,
-            process.env.REFRESH_TOKEN_SECRET as string
-        ) as TokenInfo
-
-        const user = await User.findById(decoded._id).select('+tokens')
-        if (user) {
-            user.tokens = user.tokens.filter(t => t !== token)
-            await user.save()
-        }
-
-        res.clearCookie('accessToken')
-        res.clearCookie('refreshToken')
-
-        return res.sendStatus(200)
-    } catch {
-        res.clearCookie('accessToken')
-        res.clearCookie('refreshToken')
-        return res.sendStatus(200)
-    }
+const logout = async (_req: Request, res: Response) => {
+    res.clearCookie('accessToken')
+    res.clearCookie('refreshToken')
+    return res.sendStatus(200)
 }
 
 const googleLogin = async (req: Request, res: Response) => {
@@ -189,7 +151,7 @@ const googleLogin = async (req: Request, res: Response) => {
             return sendError(res, 401, 'Invalid Google token')
         }
 
-        let user = await User.findOne({ email: payload.email }).select('+tokens')
+        let user = await User.findOne({ email: payload.email })
 
         if (!user) {
             const randomPassword = await bcrypt.hash(
@@ -206,9 +168,6 @@ const googleLogin = async (req: Request, res: Response) => {
 
         const accessToken = generateAccessToken(user._id.toString())
         const refreshToken = generateRefreshToken(user._id.toString())
-
-        user.tokens.push(refreshToken)
-        await user.save()
 
         res.cookie('accessToken', accessToken, accessCookieOptions)
         res.cookie('refreshToken', refreshToken, refreshCookieOptions)
@@ -230,7 +189,11 @@ const getCurrentUser = async (req: Request, res: Response) => {
         const token = req.cookies.accessToken
         if (!token) return res.sendStatus(401)
 
-        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as { _id: string }
+        const decoded = jwt.verify(
+            token,
+            process.env.ACCESS_TOKEN_SECRET as string
+        ) as TokenInfo
+
         const user = await User.findById(decoded._id)
         if (!user) return res.sendStatus(404)
 
@@ -239,11 +202,10 @@ const getCurrentUser = async (req: Request, res: Response) => {
             email: user.email,
             photo: user.photo
         })
-    } catch (err) {
+    } catch {
         return res.sendStatus(403)
     }
 }
-
 
 export default {
     register,
