@@ -4,12 +4,10 @@ import LoginForm from "./components/login-form";
 import { TabSelectorView } from "./pages";
 import HomePage from "./components/home-page";
 import ProfilePage from "./components/profile-page";
-import ChatPage from "./pages/ChatPage";
 
 const siteTabs = [
   { name: "Home", redirect: "home", Component: HomePage },
   { name: "Profile", redirect: "profile", Component: ProfilePage },
-  { name: "Chat", redirect: "chat", Component: ChatPage },
 ];
 
 function App() {
