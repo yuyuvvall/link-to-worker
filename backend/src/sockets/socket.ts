@@ -26,12 +26,15 @@ export const initSockets = (io: Server) => {
         socket.join(userId)
 
         socket.on('send_message', async data => {
-            const { senderId, receiverId, content } = data
-            if (!senderId || !receiverId || !content) return
-            if (senderId !== userId) return
+            const { receiverId, content } = data
+            if (!receiverId || !content) return
 
-            const newMessage = await Messages.saveMessage(senderId, receiverId, content, userId)
-            io.to(senderId).to(receiverId).emit('receive_message', newMessage)
+            try {
+                const message = await Messages.saveMessage(userId, receiverId, content, userId)
+                io.to(userId).to(receiverId).emit('receive_message', message)
+            } catch (err: any) {
+                console.error('Socket error:', err.message)
+            }
         })
 
         socket.on('disconnect', () => {

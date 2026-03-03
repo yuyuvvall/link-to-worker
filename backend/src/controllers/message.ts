@@ -8,13 +8,14 @@ const sendError = (res: Response, status: number, message: string) => {
 
 const getChatHistory = async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const { userId, contactId } = req.params
-        if (req.user?._id !== userId) return sendError(res, 403, 'Forbidden')
+        const senderId = req.user?._id
+        const { contactId } = req.params
+        if (!senderId) return sendError(res, 401, 'Unauthorized')
 
         const messages = await Message.find({
             $or: [
-                { senderId: userId, receiverId: contactId },
-                { senderId: contactId, receiverId: userId }
+                { senderId, receiverId: contactId },
+                { senderId: contactId, receiverId: senderId }
             ]
         }).sort({ createdAt: 1 })
 
