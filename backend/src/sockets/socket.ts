@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io'
-import { saveMessage } from '../controllers/message'
+import Messages from '../controllers/message'
 
 export const initSockets = (io: Server) => {
     io.on('connection', (socket: Socket) => {
@@ -18,7 +18,7 @@ export const initSockets = (io: Server) => {
 
                 if (!senderId || !receiverId || !content) return
 
-                const newMessage = await saveMessage(
+                const newMessage = await Messages.saveMessage(
                     senderId,
                     receiverId,
                     content
