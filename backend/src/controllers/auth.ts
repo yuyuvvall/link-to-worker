@@ -42,17 +42,23 @@ const generateRefreshToken = (userId: string) => {
     )
 }
 
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+
 const register = async (req: Request, res: Response) => {
     try {
-        const { email, password, photo } = req.body
+        const { email, password, username, photo } = req.body
 
-        if (!email || !password) {
-            return sendError(res, 400, 'Email and password are required')
+        if (!email || !password || !username) {
+            return sendError(res, 400, 'Email, username and password are required')
         }
 
-        const existingUser = await User.findOne({ email })
+        if (!emailRegex.test(email)) {
+            return sendError(res, 400, 'Invalid email format')
+        }
+
+        const existingUser = await User.findOne({ $or: [{ email }, { username }] })
         if (existingUser) {
-            return sendError(res, 409, 'User already exists')
+            return sendError(res, 409, 'Email or username already exists')
         }
 
         const hashedPassword = await bcrypt.hash(password, 10)
@@ -60,12 +66,14 @@ const register = async (req: Request, res: Response) => {
         const user = await User.create({
             email,
             password: hashedPassword,
+            username,
             photo
         })
 
         return res.status(201).json({
             _id: user._id,
             email: user.email,
+            username: user.username,
             photo: user.photo
         })
     } catch {
@@ -81,27 +89,24 @@ const login = async (req: Request, res: Response) => {
             return sendError(res, 400, 'Invalid email or password')
         }
 
-        const user = await User.findOne({ email }).select('+password +tokens')
-        if (!user) {
-            return sendError(res, 401, 'Invalid email or password')
+        if (!emailRegex.test(email)) {
+            return sendError(res, 400, 'Invalid email format')
         }
 
+        const user = await User.findOne({ email }).select('+password')
+        if (!user) return sendError(res, 401, 'Invalid email or password')
+
         const isValid = await bcrypt.compare(password, user.password)
-        if (!isValid) {
-            return sendError(res, 401, 'Invalid email or password')
-        }
+        if (!isValid) return sendError(res, 401, 'Invalid email or password')
 
         const accessToken = generateAccessToken(user._id.toString())
         const refreshToken = generateRefreshToken(user._id.toString())
-
-        user.tokens.push(refreshToken)
-        await user.save()
 
         res.cookie('accessToken', accessToken, accessCookieOptions)
         res.cookie('refreshToken', refreshToken, refreshCookieOptions)
 
         return res.status(200).json({
-            user: { _id: user._id, email: user.email }
+            user: { _id: user._id, email: user.email, username: user.username }
         })
     } catch {
         return sendError(res, 500, 'Something went wrong')
@@ -110,29 +115,19 @@ const login = async (req: Request, res: Response) => {
 
 const refreshToken = async (req: Request, res: Response) => {
     try {
-        const oldToken = req.cookies.refreshToken
-        if (!oldToken) return res.sendStatus(401)
+        const token = req.cookies.refreshToken
+        if (!token) return res.sendStatus(401)
 
         const decoded = jwt.verify(
-            oldToken,
+            token,
             process.env.REFRESH_TOKEN_SECRET as string
         ) as TokenInfo
 
-        const user = await User.findById(decoded._id).select('+tokens')
+        const user = await User.findById(decoded._id)
         if (!user) return res.sendStatus(403)
-
-        if (!user.tokens.includes(oldToken)) {
-            user.tokens = []
-            await user.save()
-            return res.sendStatus(403)
-        }
 
         const newAccessToken = generateAccessToken(user._id.toString())
         const newRefreshToken = generateRefreshToken(user._id.toString())
-
-        user.tokens = user.tokens.filter(t => t !== oldToken)
-        user.tokens.push(newRefreshToken)
-        await user.save()
 
         res.cookie('accessToken', newAccessToken, accessCookieOptions)
         res.cookie('refreshToken', newRefreshToken, refreshCookieOptions)
@@ -143,35 +138,10 @@ const refreshToken = async (req: Request, res: Response) => {
     }
 }
 
-const logout = async (req: Request, res: Response) => {
-    try {
-        const token = req.cookies.refreshToken
-        if (!token) {
-            res.clearCookie('accessToken')
-            res.clearCookie('refreshToken')
-            return res.sendStatus(200)
-        }
-
-        const decoded = jwt.verify(
-            token,
-            process.env.REFRESH_TOKEN_SECRET as string
-        ) as TokenInfo
-
-        const user = await User.findById(decoded._id).select('+tokens')
-        if (user) {
-            user.tokens = user.tokens.filter(t => t !== token)
-            await user.save()
-        }
-
-        res.clearCookie('accessToken')
-        res.clearCookie('refreshToken')
-
-        return res.sendStatus(200)
-    } catch {
-        res.clearCookie('accessToken')
-        res.clearCookie('refreshToken')
-        return res.sendStatus(200)
-    }
+const logout = async (_req: Request, res: Response) => {
+    res.clearCookie('accessToken')
+    res.clearCookie('refreshToken')
+    return res.sendStatus(200)
 }
 
 const googleLogin = async (req: Request, res: Response) => {
@@ -185,11 +155,9 @@ const googleLogin = async (req: Request, res: Response) => {
         })
 
         const payload = ticket.getPayload()
-        if (!payload?.email) {
-            return sendError(res, 401, 'Invalid Google token')
-        }
+        if (!payload?.email) return sendError(res, 401, 'Invalid Google token')
 
-        let user = await User.findOne({ email: payload.email }).select('+tokens')
+        let user = await User.findOne({ email: payload.email })
 
         if (!user) {
             const randomPassword = await bcrypt.hash(
@@ -200,15 +168,13 @@ const googleLogin = async (req: Request, res: Response) => {
             user = await User.create({
                 email: payload.email,
                 password: randomPassword,
+                username: payload.name,
                 photo: payload.picture
             })
         }
 
         const accessToken = generateAccessToken(user._id.toString())
         const refreshToken = generateRefreshToken(user._id.toString())
-
-        user.tokens.push(refreshToken)
-        await user.save()
 
         res.cookie('accessToken', accessToken, accessCookieOptions)
         res.cookie('refreshToken', refreshToken, refreshCookieOptions)
@@ -217,6 +183,7 @@ const googleLogin = async (req: Request, res: Response) => {
             user: {
                 _id: user._id,
                 email: user.email,
+                username: user.username,
                 photo: user.photo
             }
         })
@@ -225,31 +192,10 @@ const googleLogin = async (req: Request, res: Response) => {
     }
 }
 
-const getCurrentUser = async (req: Request, res: Response) => {
-    try {
-        const token = req.cookies.accessToken
-        if (!token) return res.sendStatus(401)
-
-        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as { _id: string }
-        const user = await User.findById(decoded._id)
-        if (!user) return res.sendStatus(404)
-
-        return res.json({
-            _id: user._id,
-            email: user.email,
-            photo: user.photo
-        })
-    } catch (err) {
-        return res.sendStatus(403)
-    }
-}
-
-
 export default {
     register,
     login,
     refreshToken,
     logout,
     googleLogin,
-    getCurrentUser
 }

@@ -1,16 +1,31 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { io, type Socket } from 'socket.io-client'
 import messageService from '../../services/message-service'
+import userService from '../../services/user-service'
 import type { IMessage, ChatProps } from '../../types/chat'
 import './Chat.css'
 
 const SOCKET_URL = import.meta.env.VITE_API_URL
 
-const Chat = ({ currentUserId, targetUserId, targetUserName }: ChatProps) => {
+const Chat = ({ currentUserId, targetUserId }: ChatProps) => {
     const [messages, setMessages] = useState<IMessage[]>([])
     const [inputValue, setInputValue] = useState('')
+    const [targetUserName, setTargetUserName] = useState<string>('')
     const socketRef = useRef<Socket | null>(null)
     const scrollRef = useRef<HTMLDivElement | null>(null)
+
+    useEffect(() => {
+        if (!targetUserId) return
+        const fetchUser = async () => {
+            try {
+                const user = await userService.getUserProfile(targetUserId)
+                setTargetUserName(user.username || user.email)
+            } catch (err) {
+                console.error('Failed to fetch target user info:', err)
+            }
+        }
+        fetchUser()
+    }, [targetUserId])
 
     useEffect(() => {
         if (!targetUserId) return
@@ -24,10 +39,7 @@ const Chat = ({ currentUserId, targetUserId, targetUserName }: ChatProps) => {
     }, [targetUserId])
 
     useEffect(() => {
-        const socket = io(SOCKET_URL, {
-            transports: ['websocket'],
-            withCredentials: true,
-        })
+        const socket = io(SOCKET_URL, { transports: ['websocket'], withCredentials: true })
         socketRef.current = socket
 
         const handleReceiveMessage = (message: IMessage) => {
@@ -43,7 +55,6 @@ const Chat = ({ currentUserId, targetUserId, targetUserName }: ChatProps) => {
         }
 
         socket.on('receive_message', handleReceiveMessage)
-
         return () => {
             socket.off('receive_message', handleReceiveMessage)
             socket.disconnect()
@@ -65,6 +76,17 @@ const Chat = ({ currentUserId, targetUserId, targetUserName }: ChatProps) => {
         [inputValue, targetUserId]
     )
 
+    const groupedMessages = messages.reduce<Record<string, IMessage[]>>((acc, msg) => {
+        const day = msg.createdAt ? new Date(msg.createdAt).toDateString() : 'Unknown'
+        if (!acc[day]) acc[day] = []
+        acc[day].push(msg)
+        return acc
+    }, {})
+
+    const sortedDays = Object.keys(groupedMessages).sort(
+        (a, b) => new Date(a).getTime() - new Date(b).getTime()
+    )
+
     return (
         <div className="chat-page">
             <div className="chat-container">
@@ -76,20 +98,28 @@ const Chat = ({ currentUserId, targetUserId, targetUserName }: ChatProps) => {
                 </div>
 
                 <div className="messages-container" ref={scrollRef}>
-                    {messages.map(msg => {
-                        const isSent = msg.senderId === currentUserId
-                        const time = msg.createdAt
-                            ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                            : ''
-                        return (
-                            <div key={msg._id} className={`message-row ${isSent ? 'sent' : 'received'}`}>
-                                <div className="message-bubble">
-                                    <div className="message-content">{msg.content}</div>
-                                    <div className="message-time">{time}</div>
-                                </div>
-                            </div>
-                        )
-                    })}
+                    {sortedDays.map(day => (
+                        <div key={day}>
+                            <div className="chat-date">{day}</div>
+                            {groupedMessages[day].map(msg => {
+                                const isSent = msg.senderId === currentUserId
+                                const time = msg.createdAt
+                                    ? new Date(msg.createdAt).toLocaleTimeString([], {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                    })
+                                    : ''
+                                return (
+                                    <div key={msg._id} className={`message-row ${isSent ? 'sent' : 'received'}`}>
+                                        <div className="message-bubble">
+                                            <div className="message-content">{msg.content}</div>
+                                            <div className="message-time">{time}</div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    ))}
                 </div>
 
                 <form className="chat-footer" onSubmit={sendMessage}>

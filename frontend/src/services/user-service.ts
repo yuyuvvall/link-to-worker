@@ -1,42 +1,42 @@
 import apiClient from './api-client'
+import type { UserProfile, UpdateProfileData, UserResponse } from '../types/user'
 
-export type UserBadge = {
-  iconUrl: string
-  label: string
-}
+const userApi = apiClient.create({
+  baseURL: apiClient.defaults.baseURL + '/user',
+})
 
-export type UserProfile = {
-  _id: string
-  email: string
-  username: string
-  photo: string
-  location?: string
-  bannerImageUrl?: string
-  badges?: UserBadge[]
-}
-
-export type UpdateProfileData = {
-  username?: string
-  location?: string
-  photo?: string
-  bannerImageUrl?: string
-  badges?: UserBadge[]
-}
-
-const getUserProfile = (userId: string) => {
+export const getUserProfile = async (userId: string): Promise<UserProfile> => {
   const controller = new AbortController()
-  const request = apiClient.get<UserProfile>(`/user/${userId}`, {
-    signal: controller.signal,
-  })
-  return { request, cancel: () => controller.abort() }
+  try {
+    const res = await userApi.get<UserProfile>(`/${userId}`, { signal: controller.signal })
+    return res.data
+  } finally {
+    controller.abort()
+  }
 }
 
-const updateUserProfile = (userId: string, data: UpdateProfileData) => {
+export const updateUserProfile = async (data: UpdateProfileData): Promise<UserProfile> => {
   const controller = new AbortController()
-  const request = apiClient.put<UserProfile>(`/user/${userId}`, data, {
-    signal: controller.signal,
-  })
-  return { request, cancel: () => controller.abort() }
+  try {
+    const res = await userApi.patch<UserProfile>('/', data, { signal: controller.signal })
+    return res.data
+  } finally {
+    controller.abort()
+  }
 }
 
-export default { getUserProfile, updateUserProfile }
+export const getCurrentUser = async (): Promise<UserResponse> => {
+  const controller = new AbortController()
+  try {
+    const res = await userApi.get<UserResponse>('/me', { signal: controller.signal })
+    return res.data
+  } finally {
+    controller.abort()
+  }
+}
+
+export default {
+  getUserProfile,
+  updateUserProfile,
+  getCurrentUser,
+}

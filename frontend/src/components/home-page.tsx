@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AuthService from '../services/auth-service'
+import userService from '../services/user-service'
 
 const HomePage = () => {
     const navigate = useNavigate()
@@ -13,7 +14,7 @@ const HomePage = () => {
 
         const checkAuth = async () => {
             try {
-                await AuthService.getCurrentUser()
+                await userService.getCurrentUser()
             } catch {
                 navigate('/login')
             } finally {
