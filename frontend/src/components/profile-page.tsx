@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { ProfileCard, PostsList, EditForm } from '@link-to-worker/ui-kit'
 import type { PostProps, PostsListItem, EditFormEntry, EditFormGroupFieldEntry } from '@link-to-worker/ui-kit'
 import UserService from '../services/user-service'
@@ -18,6 +18,7 @@ type EditFormState = {
 export type ProfilePageProps = {
   initialProfile?: UserProfile
   initialPosts?: PostData[]
+  userId?: string
 }
 
 const mapPostsToListItems = (
@@ -31,14 +32,16 @@ const mapPostsToListItems = (
     text: post.content,
     photoUrl: post.photoUrl,
     isLiked: false,
-    likesCount: post.likes.length,
-    commentsCount: post.commentsCount,
+    // TODO: Implement likes and comments
+    // likesCount: post.likes.length,
+    // commentsCount: post.comments.length,
+    likesCount: 0,
+    commentsCount: 0,
   }))
 }
 
-const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
+const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps) => {
   const navigate = useNavigate()
-  const { userId } = useParams<{ userId: string }>()
 
   const [profile, setProfile] = useState<UserProfile | null>(initialProfile ?? null)
   const [postsData, setPostsData] = useState<PostData[]>(initialPosts ?? [])
@@ -89,12 +92,12 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
   }, [userId, initialProfile, navigate])
 
   useEffect(() => {
-    if (initialPosts || !userId) return
+    if (initialPosts || !profile) return
 
     const loadPosts = async () => {
       setIsLoadingPosts(true)
       try {
-        const { request } = PostService.getUserPosts(userId)
+        const { request } = PostService.getUserPosts(profile._id)
         const res = await request
         setPostsData(res.data)
         setHasMore(false)
@@ -104,8 +107,9 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
         setIsLoadingPosts(false)
       }
     }
+
     loadPosts()
-  }, [userId, initialPosts])
+  }, [profile, initialPosts])
 
   const handleLikeClick = useCallback((postId: string) => {
     console.log('like clicked', postId)
@@ -167,10 +171,10 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
   }, [])
 
   const handleEditSubmit = useCallback(async () => {
-    if (!editFormData || !userId) return
+    if (!editFormData || !profile) return
 
     try {
-      const updatedProfile = await UserService.updateUserProfile(userId, {
+      const updatedProfile = await UserService.updateUserProfile(profile._id, {
         username: editFormData.username,
         location: editFormData.location || undefined,
         photo: editFormData.photo,
@@ -184,7 +188,7 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
 
     setIsEditing(false)
     setEditFormData(null)
-  }, [editFormData, userId])
+  }, [editFormData, profile])
 
   const handleEditCancel = useCallback(() => {
     setIsEditing(false)

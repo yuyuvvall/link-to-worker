@@ -3,17 +3,29 @@ import apiClient from './api-client'
 export type PostData = {
   _id: string
   authorId: string
+  title: string
   content: string
   photoUrl?: string
   likes: string[]
-  commentsCount: number
+  comments: string[]
   createdAt: string
 }
 
+const postApi = apiClient.create({
+  baseURL: apiClient.defaults.baseURL + '/post',
+})
+
 const getUserPosts = (authorId: string) => {
   const controller = new AbortController()
-  const request = apiClient.get<PostData[]>('/post', {
-    params: { authorId },
+  const request = postApi.get<PostData[]>(`/${authorId}`, {
+    signal: controller.signal,
+  })
+  return { request, cancel: () => controller.abort() }
+}
+
+const createPost = (data: { title: string; content: string; photoUrl?: string }) => {
+  const controller = new AbortController()
+  const request = postApi.post<PostData>('/', data, {
     signal: controller.signal,
   })
   return { request, cancel: () => controller.abort() }
@@ -26,4 +38,4 @@ const toggleLike = (postId: string) => {
   return { request, cancel: () => {} }
 }
 
-export default { getUserPosts, toggleLike }
+export default { getUserPosts, createPost, toggleLike }

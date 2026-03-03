@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import ProfilePage from './profile-page'
-import type { UserProfile } from '../services/user-service'
+import type { UserProfile } from '../types/user'
 import type { PostData } from '../services/post-service'
 
 const mockProfile: UserProfile = {
