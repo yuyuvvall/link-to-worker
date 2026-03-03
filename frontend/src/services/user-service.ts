@@ -9,7 +9,7 @@ export type UserProfile = {
   _id: string
   email: string
   username: string
-  photo: string
+  photo?: string
   location?: string
   bannerImageUrl?: string
   badges?: UserBadge[]

@@ -4,6 +4,7 @@ import { ProfileCard, PostsList, EditForm } from '@link-to-worker/ui-kit'
 import type { PostProps, PostsListItem, EditFormEntry, EditFormGroupFieldEntry } from '@link-to-worker/ui-kit'
 import UserService from '../services/user-service'
 import PostService from '../services/post-service'
+import AuthService from '../services/auth-service'
 import type { UserProfile, UserBadge } from '../services/user-service'
 import type { PostData } from '../services/post-service'
 
@@ -26,7 +27,7 @@ const mapPostsToListItems = (
 ): PostsListItem<PostProps>[] => {
   return postsData.map((post) => ({
     id: post._id,
-    profileImageUrl: profile.photo,
+    profileImageUrl: profile.photo ?? '',
     username: profile.username,
     text: post.content,
     photoUrl: post.photoUrl,
@@ -48,17 +49,40 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
   const [isEditing, setIsEditing] = useState(false)
   const [editFormData, setEditFormData] = useState<EditFormState | null>(null)
 
+  // useEffect(() => {
+  //   const auth = async () => {
+  //     try {
+  //       const user = await AuthService.getCurrentUser()
+  //       if (!user) {
+  //         navigate('/login')
+  //       }
+  //     } catch {
+  //       navigate('/login')
+  //     }
+  //   }
+  //   auth()
+  // }, [navigate])
+
   useEffect(() => {
-    const accessToken = localStorage.getItem('accessToken')
-    if (!accessToken) {
-      navigate('/login')
+    if (initialProfile || !userId) {
+      const auth = async () => {
+        try {
+          const user = await AuthService.getCurrentUser()
+          if (!user) {
+            navigate('/login')
+          }
+
+          setProfile({...user, _id: user._id, username: user.email})
+        } catch {
+          navigate('/login')
+        }
+      }
+      auth()
+
+      return
     }
-  }, [navigate])
 
-  useEffect(() => {
-    if (initialProfile || !userId) return
-
-    const { request, cancel } = UserService.getUserProfile(userId)
+    const { request, cancel } = UserService.getUserProfile(userId ?? '')
     request
       .then((res) => {
         setProfile(res.data)
@@ -68,7 +92,7 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
       })
 
     return cancel
-  }, [userId, initialProfile])
+  }, [userId, initialProfile, navigate])
 
   useEffect(() => {
     if (initialPosts || !userId) return
@@ -106,7 +130,7 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
     setEditFormData({
       username: profile.username,
       location: profile.location ?? '',
-      photo: profile.photo,
+      photo: profile.photo ?? '',
       bannerImageUrl: profile.bannerImageUrl ?? '',
       badges: profile.badges ?? [],
     })
