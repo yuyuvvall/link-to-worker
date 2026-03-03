@@ -32,7 +32,8 @@ const Chat = ({ currentUserId, targetUserId, targetUserName }: ChatProps) => {
 
         const socket = io(SOCKET_URL, {
             query: { userId: currentUserId },
-            transports: ['websocket']
+            transports: ['websocket'],
+            withCredentials: true
         })
 
         socketRef.current = socket
