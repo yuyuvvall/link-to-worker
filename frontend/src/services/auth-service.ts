@@ -66,17 +66,4 @@ const googleLogin = (credential: string) => {
     return { request, cancel: () => controller.abort() }
 }
 
-// const getCurrentUser = async (): Promise<UserResponse> => {
-//     const controller = new AbortController()
-//     try {
-//         const res = await apiClient.get<UserResponse>(
-//             "/auth/me",
-//             { signal: controller.signal }
-//         )
-//         return res.data
-//     } finally {
-//         controller.abort()
-//     }
-// }
-
 export default { authRegister, authLogin, authLogout, googleLogin }
