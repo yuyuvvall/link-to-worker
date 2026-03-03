@@ -8,5 +8,5 @@ router.use(authMiddleware)
 
 router.get('/:id', UserController.getUserById)
 router.patch('/', UserController.updateUser)
-
+router.get('/me', UserController.getCurrentUser)
 export default router

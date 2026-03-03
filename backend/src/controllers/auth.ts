@@ -16,14 +16,14 @@ const accessCookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
-    maxAge: 15 * 60 * 1000 // 15 minutes
+    maxAge: 15 * 60 * 1000
 }
 
 const refreshCookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    maxAge: 7 * 24 * 60 * 60 * 1000
 }
 
 const generateAccessToken = (userId: string) => {
@@ -44,15 +44,15 @@ const generateRefreshToken = (userId: string) => {
 
 const register = async (req: Request, res: Response) => {
     try {
-        const { email, password, photo } = req.body
+        const { email, password, username, photo } = req.body
 
-        if (!email || !password) {
-            return sendError(res, 400, 'Email and password are required')
+        if (!email || !password || !username) {
+            return sendError(res, 400, 'Email, username and password are required')
         }
 
-        const existingUser = await User.findOne({ email })
+        const existingUser = await User.findOne({ $or: [{ email }, { username }] })
         if (existingUser) {
-            return sendError(res, 409, 'User already exists')
+            return sendError(res, 409, 'Email or username already exists')
         }
 
         const hashedPassword = await bcrypt.hash(password, 10)
@@ -60,12 +60,14 @@ const register = async (req: Request, res: Response) => {
         const user = await User.create({
             email,
             password: hashedPassword,
+            username,
             photo
         })
 
         return res.status(201).json({
             _id: user._id,
             email: user.email,
+            username: user.username,
             photo: user.photo
         })
     } catch {
@@ -82,14 +84,10 @@ const login = async (req: Request, res: Response) => {
         }
 
         const user = await User.findOne({ email }).select('+password')
-        if (!user) {
-            return sendError(res, 401, 'Invalid email or password')
-        }
+        if (!user) return sendError(res, 401, 'Invalid email or password')
 
         const isValid = await bcrypt.compare(password, user.password)
-        if (!isValid) {
-            return sendError(res, 401, 'Invalid email or password')
-        }
+        if (!isValid) return sendError(res, 401, 'Invalid email or password')
 
         const accessToken = generateAccessToken(user._id.toString())
         const refreshToken = generateRefreshToken(user._id.toString())
@@ -98,7 +96,7 @@ const login = async (req: Request, res: Response) => {
         res.cookie('refreshToken', refreshToken, refreshCookieOptions)
 
         return res.status(200).json({
-            user: { _id: user._id, email: user.email }
+            user: { _id: user._id, email: user.email, username: user.username }
         })
     } catch {
         return sendError(res, 500, 'Something went wrong')
@@ -147,9 +145,7 @@ const googleLogin = async (req: Request, res: Response) => {
         })
 
         const payload = ticket.getPayload()
-        if (!payload?.email) {
-            return sendError(res, 401, 'Invalid Google token')
-        }
+        if (!payload?.email) return sendError(res, 401, 'Invalid Google token')
 
         let user = await User.findOne({ email: payload.email })
 
@@ -159,9 +155,12 @@ const googleLogin = async (req: Request, res: Response) => {
                 10
             )
 
+            const username = payload.name
+
             user = await User.create({
                 email: payload.email,
                 password: randomPassword,
+                username,
                 photo: payload.picture
             })
         }
@@ -176,6 +175,7 @@ const googleLogin = async (req: Request, res: Response) => {
             user: {
                 _id: user._id,
                 email: user.email,
+                username: user.username,
                 photo: user.photo
             }
         })
@@ -184,28 +184,6 @@ const googleLogin = async (req: Request, res: Response) => {
     }
 }
 
-const getCurrentUser = async (req: Request, res: Response) => {
-    try {
-        const token = req.cookies.accessToken
-        if (!token) return res.sendStatus(401)
-
-        const decoded = jwt.verify(
-            token,
-            process.env.ACCESS_TOKEN_SECRET as string
-        ) as TokenInfo
-
-        const user = await User.findById(decoded._id)
-        if (!user) return res.sendStatus(404)
-
-        return res.json({
-            _id: user._id,
-            email: user.email,
-            photo: user.photo
-        })
-    } catch {
-        return res.sendStatus(403)
-    }
-}
 
 export default {
     register,
@@ -213,5 +191,4 @@ export default {
     refreshToken,
     logout,
     googleLogin,
-    getCurrentUser
 }

@@ -51,7 +51,22 @@ const updateUser = async (req: AuthenticatedRequest, res: Response) => {
     }
 };
 
+const getCurrentUser = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const userId = req.user?._id;
+        if (!userId) return sendError(401, "Unauthorized", res);
+
+        const user = await User.findById(userId).select("-password");
+        if (!user) return sendError(404, "User not found", res);
+
+        return res.json(user);
+    } catch {
+        return sendError(500, "Internal server error", res);
+    }
+};
+
 export default {
     getUserById,
     updateUser,
+    getCurrentUser
 };

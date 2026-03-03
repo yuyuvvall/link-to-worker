@@ -8,6 +8,5 @@ router.post('/login', Auth.login)
 router.post('/logout', Auth.logout)
 router.post('/refreshToken', Auth.refreshToken)
 router.post('/google', Auth.googleLogin)
-router.get('/me', Auth.getCurrentUser)
 
 export default router
