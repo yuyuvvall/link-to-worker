@@ -71,7 +71,7 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
             navigate('/login')
           }
 
-          setProfile({...user, _id: user._id, username: user.email})
+          setProfile(user)
         } catch {
           navigate('/login')
         }
