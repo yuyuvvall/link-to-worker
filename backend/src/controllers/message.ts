@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { Message } from '../models/message_model'
 
-export const getChatHistory = async (req: Request, res: Response) => {
+const getChatHistory = async (req: Request, res: Response) => {
     try {
         const { userId, contactId } = req.params
 
@@ -18,7 +18,7 @@ export const getChatHistory = async (req: Request, res: Response) => {
     }
 }
 
-export const saveMessage = async (
+const saveMessage = async (
     senderId: string,
     receiverId: string,
     content: string
@@ -31,4 +31,9 @@ export const saveMessage = async (
 
     await message.save()
     return message
+}
+
+export default {
+    getChatHistory,
+    saveMessage
 }
