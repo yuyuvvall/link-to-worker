@@ -5,7 +5,6 @@ import dotenv from 'dotenv'
 import mongoose from 'mongoose'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
-
 import authRouter from './routes/auth_route'
 import fileRouter from './routes/file_route'
 import postRouter from './routes/post_routes'
