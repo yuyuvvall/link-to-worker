@@ -16,39 +16,31 @@ type FormData = {
     password: string
 }
 
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+
 const RegistrationForm = () => {
     const navigate = useNavigate()
     const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>()
     const [imgSrc, setImageSrc] = useState<string>("")
     const [formError, setFormError] = useState<string | null>(null)
-    const [checking, setChecking] = useState(true)
     const photoRef: { current: HTMLInputElement | null } = { current: null }
     const { ref, ...rest } = register('photo')
     const [photo] = watch(["photo"])
+    const [checking, setChecking] = useState(true)
 
     useEffect(() => {
         const checkAuth = async () => {
-            try {
-                await userService.getCurrentUser()
-                navigate('/home', { replace: true })
-            } catch { }
-            finally {
-                setChecking(false)
-            }
+            try { await userService.getCurrentUser(); navigate('/home', { replace: true }) } catch { }
+            finally { setChecking(false) }
         }
         checkAuth()
     }, [navigate])
 
     useEffect(() => {
-        if (photo && photo[0]) {
-            const newUrl = URL.createObjectURL(photo[0])
-            setImageSrc(newUrl)
-        }
+        if (photo && photo[0]) setImageSrc(URL.createObjectURL(photo[0]))
     }, [photo])
 
-    const handlePhotoClick = () => {
-        photoRef.current?.click()
-    }
+    const handlePhotoClick = () => { photoRef.current?.click() }
 
     const uploadImage = async (file: File): Promise<string> => {
         try {
@@ -63,31 +55,21 @@ const RegistrationForm = () => {
 
     const onSubmit = async (data: FormData) => {
         setFormError(null)
+
+        if (!emailRegex.test(data.email)) {
+            setFormError("Invalid email format")
+            return
+        }
+
         try {
             let imgUrl = avatarImg
-            if (data.photo && data.photo[0]) {
-                imgUrl = await uploadImage(data.photo[0])
-            }
+            if (data.photo && data.photo[0]) imgUrl = await uploadImage(data.photo[0])
 
-            await AuthService.authRegister({
-                username: data.username,
-                email: data.email,
-                password: data.password,
-                photo: imgUrl
-            })
-
-            await AuthService.authLogin({
-                email: data.email,
-                password: data.password
-            })
-
+            await AuthService.authRegister({ username: data.username, email: data.email, password: data.password, photo: imgUrl })
+            await AuthService.authLogin({ email: data.email, password: data.password })
             navigate('/home')
         } catch (err: any) {
-            if (err.response?.data?.message) {
-                setFormError(err.response.data.message)
-            } else {
-                setFormError('Something went wrong. Please try again.')
-            }
+            setFormError(err.response?.data?.message || 'Something went wrong. Please try again.')
         }
     }
 
@@ -101,12 +83,7 @@ const RegistrationForm = () => {
             <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="d-flex justify-content-center position-relative" style={{ width: "200px", margin: "0 auto" }}>
                     <div style={{ height: "200px", width: "200px" }}>
-                        <img
-                            src={imgSrc || avatarImg}
-                            alt="Preview"
-                            className="img-fluid"
-                            style={{ height: "200px", width: "200px", objectFit: "cover", borderRadius: "50%" }}
-                        />
+                        <img src={imgSrc || avatarImg} alt="Preview" className="img-fluid" style={{ height: "200px", width: "200px", objectFit: "cover", borderRadius: "50%" }} />
                     </div>
                     <div className="position-absolute bottom-0 end-0">
                         <button type="button" className="btn" onClick={handlePhotoClick}>
@@ -125,37 +102,20 @@ const RegistrationForm = () => {
                 />
 
                 <div className="vstack gap-2 mt-3">
-                    <input
-                        {...register("username", { required: "Username is required" })}
-                        type="text"
-                        className={`form-control ${errors.username ? 'is-invalid' : ''}`}
-                        placeholder="Username"
-                    />
+                    <input {...register("username", { required: "Username is required" })} type="text" className={`form-control ${errors.username ? 'is-invalid' : ''}`} placeholder="Username" />
                     {errors.username && <div className="invalid-feedback">{errors.username.message}</div>}
 
-                    <input
-                        {...register("email", { required: "Email is required" })}
-                        type="text"
-                        className={`form-control ${errors.email ? 'is-invalid' : ''}`}
-                        placeholder="Email"
-                    />
+                    <input {...register("email", { required: "Email is required" })} type="text" className={`form-control ${errors.email ? 'is-invalid' : ''}`} placeholder="Email" />
                     {errors.email && <div className="invalid-feedback">{errors.email.message}</div>}
 
-                    <input
-                        {...register("password", { required: "Password is required" })}
-                        type="password"
-                        className={`form-control ${errors.password ? 'is-invalid' : ''}`}
-                        placeholder="Password"
-                    />
+                    <input {...register("password", { required: "Password is required" })} type="password" className={`form-control ${errors.password ? 'is-invalid' : ''}`} placeholder="Password" />
                     {errors.password && <div className="invalid-feedback">{errors.password.message}</div>}
 
                     <button type="submit" className="btn btn-outline-secondary">Register</button>
                 </div>
             </form>
 
-            <p className="text-center mt-2">
-                Already have an account? <a href="/login">Login</a>
-            </p>
+            <p className="text-center mt-2">Already have an account? <a href="/login">Login</a></p>
         </div>
     )
 }

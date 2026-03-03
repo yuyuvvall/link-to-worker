@@ -42,12 +42,18 @@ const generateRefreshToken = (userId: string) => {
     )
 }
 
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+
 const register = async (req: Request, res: Response) => {
     try {
         const { email, password, username, photo } = req.body
 
         if (!email || !password || !username) {
             return sendError(res, 400, 'Email, username and password are required')
+        }
+
+        if (!emailRegex.test(email)) {
+            return sendError(res, 400, 'Invalid email format')
         }
 
         const existingUser = await User.findOne({ $or: [{ email }, { username }] })
@@ -81,6 +87,10 @@ const login = async (req: Request, res: Response) => {
 
         if (!email || !password) {
             return sendError(res, 400, 'Invalid email or password')
+        }
+
+        if (!emailRegex.test(email)) {
+            return sendError(res, 400, 'Invalid email format')
         }
 
         const user = await User.findOne({ email }).select('+password')
@@ -155,12 +165,10 @@ const googleLogin = async (req: Request, res: Response) => {
                 10
             )
 
-            const username = payload.name
-
             user = await User.create({
                 email: payload.email,
                 password: randomPassword,
-                username,
+                username: payload.name,
                 photo: payload.picture
             })
         }
@@ -183,7 +191,6 @@ const googleLogin = async (req: Request, res: Response) => {
         return sendError(res, 500, 'Something went wrong')
     }
 }
-
 
 export default {
     register,
