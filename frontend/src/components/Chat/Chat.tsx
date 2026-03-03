@@ -9,40 +9,31 @@ const SOCKET_URL = import.meta.env.VITE_API_URL
 const Chat = ({ currentUserId, targetUserId, targetUserName }: ChatProps) => {
     const [messages, setMessages] = useState<IMessage[]>([])
     const [inputValue, setInputValue] = useState('')
-
     const socketRef = useRef<Socket | null>(null)
     const scrollRef = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
-        if (!currentUserId || !targetUserId) return
-
-        const { request, cancel } = messageService.getChatHistory(currentUserId, targetUserId)
-
+        if (!targetUserId) return
+        const { request, cancel } = messageService.getChatHistory(targetUserId)
         request
             .then(res => setMessages(res.data))
             .catch(err => {
                 if (err.name !== 'CanceledError') console.error(err)
             })
-
         return cancel
-    }, [currentUserId, targetUserId])
+    }, [targetUserId])
 
     useEffect(() => {
-        if (!currentUserId) return
-
         const socket = io(SOCKET_URL, {
-            query: { userId: currentUserId },
             transports: ['websocket'],
-            withCredentials: true
+            withCredentials: true,
         })
-
         socketRef.current = socket
 
         const handleReceiveMessage = (message: IMessage) => {
             const isRelevant =
                 (message.senderId === currentUserId && message.receiverId === targetUserId) ||
                 (message.senderId === targetUserId && message.receiverId === currentUserId)
-
             if (!isRelevant) return
 
             setMessages(prev => {
@@ -60,29 +51,19 @@ const Chat = ({ currentUserId, targetUserId, targetUserName }: ChatProps) => {
     }, [currentUserId, targetUserId])
 
     useEffect(() => {
-        const container = scrollRef.current
-        if (!container) return
-
-        container.scrollTo({
-            top: container.scrollHeight,
-            behavior: 'smooth'
-        })
+        scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
     }, [messages])
 
-    const sendMessage = useCallback((e: React.SyntheticEvent<HTMLFormElement>) => {
-        e.preventDefault()
-
-        const content = inputValue.trim()
-        if (!content || !socketRef.current) return
-
-        socketRef.current.emit('send_message', {
-            senderId: currentUserId,
-            receiverId: targetUserId,
-            content
-        })
-
-        setInputValue('')
-    }, [inputValue, currentUserId, targetUserId])
+    const sendMessage = useCallback(
+        (e: React.SyntheticEvent<HTMLFormElement>) => {
+            e.preventDefault()
+            const content = inputValue.trim()
+            if (!content || !socketRef.current) return
+            socketRef.current.emit('send_message', { receiverId: targetUserId, content })
+            setInputValue('')
+        },
+        [inputValue, targetUserId]
+    )
 
     return (
         <div className="chat-page">
@@ -100,7 +81,6 @@ const Chat = ({ currentUserId, targetUserId, targetUserName }: ChatProps) => {
                         const time = msg.createdAt
                             ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                             : ''
-
                         return (
                             <div key={msg._id} className={`message-row ${isSent ? 'sent' : 'received'}`}>
                                 <div className="message-bubble">
