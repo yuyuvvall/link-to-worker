@@ -26,7 +26,7 @@ const mapPostsToListItems = (
 ): PostsListItem<PostProps>[] => {
   return postsData.map((post) => ({
     id: post._id,
-    profileImageUrl: profile.photo,
+    profileImageUrl: profile.photo ?? '',
     username: profile.username,
     text: post.content,
     photoUrl: post.photoUrl,
@@ -48,46 +48,63 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
   const [isEditing, setIsEditing] = useState(false)
   const [editFormData, setEditFormData] = useState<EditFormState | null>(null)
 
+  // useEffect(() => {
+  //   const auth = async () => {
+  //     try {
+  //       const user = await AuthService.getCurrentUser()
+  //       if (!user) {
+  //         navigate('/login')
+  //       }
+  //     } catch {
+  //       navigate('/login')
+  //     }
+  //   }
+  //   auth()
+  // }, [navigate])
+
   useEffect(() => {
-    const accessToken = localStorage.getItem('accessToken')
-    if (!accessToken) {
-      navigate('/login')
+    if (initialProfile || !userId) {
+      const auth = async () => {
+        try {
+          const user = await UserService.getCurrentUser()
+          if (!user) {
+            navigate('/login')
+          }
+
+          setProfile(user)
+        } catch {
+          navigate('/login')
+        }
+      }
+      auth()
+
+      return
     }
-  }, [navigate])
 
-  useEffect(() => {
-    if (initialProfile || !userId) return
-
-    const { request, cancel } = UserService.getUserProfile(userId)
-    request
-      .then((res) => {
-        setProfile(res.data)
-      })
-      .catch((err) => {
-        console.error('Failed to load profile', err)
-      })
-
-    return cancel
-  }, [userId, initialProfile])
+    UserService.getUserProfile(userId ?? '').then((res) => {
+      setProfile(res)
+    }).catch((err) => {
+      console.error('Failed to load profile', err)
+    })
+  }, [userId, initialProfile, navigate])
 
   useEffect(() => {
     if (initialPosts || !userId) return
 
-    setIsLoadingPosts(true)
-    const { request, cancel } = PostService.getUserPosts(userId)
-    request
-      .then((res) => {
+    const loadPosts = async () => {
+      setIsLoadingPosts(true)
+      try {
+        const { request } = PostService.getUserPosts(userId)
+        const res = await request
         setPostsData(res.data)
         setHasMore(false)
-      })
-      .catch((err) => {
+      } catch (err: unknown) {
         console.error('Failed to load posts', err)
-      })
-      .finally(() => {
+      } finally {
         setIsLoadingPosts(false)
-      })
-
-    return cancel
+      }
+    }
+    loadPosts()
   }, [userId, initialPosts])
 
   const handleLikeClick = useCallback((postId: string) => {
@@ -107,7 +124,7 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
     setEditFormData({
       username: profile.username,
       location: profile.location ?? '',
-      photo: profile.photo,
+      photo: profile.photo ?? '',
       bannerImageUrl: profile.bannerImageUrl ?? '',
       badges: profile.badges ?? [],
     })
@@ -133,6 +150,7 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
     [],
   )
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleGroupItemAdd = useCallback((_groupName: string) => {
     setEditFormData((prev) => {
       if (!prev) return prev
@@ -152,15 +170,14 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
     if (!editFormData || !userId) return
 
     try {
-      const { request } = UserService.updateUserProfile(userId, {
+      const updatedProfile = await UserService.updateUserProfile(userId, {
         username: editFormData.username,
         location: editFormData.location || undefined,
         photo: editFormData.photo,
         bannerImageUrl: editFormData.bannerImageUrl || undefined,
         badges: editFormData.badges,
       })
-      const res = await request
-      setProfile(res.data)
+      setProfile(updatedProfile)
     } catch (err) {
       console.error('Failed to update profile', err)
     }

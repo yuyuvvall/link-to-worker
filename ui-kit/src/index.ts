@@ -16,3 +16,5 @@ export type {
   EditFormFieldType,
   EditFormGroupFieldEntry,
 } from './edit-form'
+
+export { ResponsiveAppBar } from './app-bar'

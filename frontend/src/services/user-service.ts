@@ -15,7 +15,7 @@ export const getUserProfile = async (userId: string): Promise<UserProfile> => {
   }
 }
 
-export const updateUserProfile = async (data: UpdateProfileData): Promise<UserProfile> => {
+export const updateUserProfile = async (_userId: string, data: UpdateProfileData): Promise<UserProfile> => {
   const controller = new AbortController()
   try {
     const res = await userApi.patch<UserProfile>('/', data, { signal: controller.signal })

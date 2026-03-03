@@ -8,7 +8,7 @@ import type { ProfileCardBadge } from './profile-card-badges'
 export type { ProfileCardBadge }
 
 export type ProfileCardProps = {
-  profileImageUrl: string
+  profileImageUrl?: string
   username: string
   location?: string
   bannerImageUrl?: string
@@ -32,11 +32,12 @@ const ProfileCard = ({
           onEditClick={onEditClick}
         />
       }
-      avatar={
-        <ProfileCardAvatar
+      avatar={profileImageUrl 
+        ? <ProfileCardAvatar
           imageUrl={profileImageUrl}
           username={username}
-        />
+          />
+         : null
       }
       info={
         <ProfileCardInfo
@@ -47,7 +48,7 @@ const ProfileCard = ({
       badges={
         badges && badges.length > 0
           ? <ProfileCardBadges badges={badges} />
-          : <></>
+          : null
       }
     />
   )
