@@ -1,69 +1,57 @@
-import apiClient from "./api-client"
+import apiClient from './api-client'
+import type {
+    RegistrationResponseData,
+    RegisterData,
+    LoginData,
+    UserResponse,
+} from '../types/auth'
 
-export interface RegistrationResponseData {
-    _id: string
-    email: string
-    username: string
-    photo?: string
-}
+const authApi = apiClient.create({
+    baseURL: apiClient.defaults.baseURL + '/auth',
+})
 
-export interface RegisterData {
-    email: string
-    username: string
-    password: string
-    photo?: string
-}
-
-export interface LoginData {
-    email: string
-    password: string
-}
-
-export interface UserResponse {
-    _id: string
-    email: string
-    username: string
-    photo?: string
-}
-
-const authRegister = (registration: RegisterData) => {
+export const authRegister = async (registration: RegisterData): Promise<RegistrationResponseData> => {
     const controller = new AbortController()
-    const request = apiClient.post<RegistrationResponseData>(
-        "/auth/register",
-        registration,
-        { signal: controller.signal }
-    )
-    return { request, cancel: () => controller.abort() }
+    try {
+        const res = await authApi.post<RegistrationResponseData>('/register', registration, { signal: controller.signal })
+        return res.data
+    } finally {
+        controller.abort()
+    }
 }
 
-const authLogin = (loginData: LoginData) => {
+export const authLogin = async (loginData: LoginData): Promise<UserResponse> => {
     const controller = new AbortController()
-    const request = apiClient.post<UserResponse>(
-        "/auth/login",
-        loginData,
-        { signal: controller.signal }
-    )
-    return { request, cancel: () => controller.abort() }
+    try {
+        const res = await authApi.post<UserResponse>('/login', loginData, { signal: controller.signal })
+        return res.data
+    } finally {
+        controller.abort()
+    }
 }
 
-const authLogout = () => {
+export const authLogout = async (): Promise<void> => {
     const controller = new AbortController()
-    const request = apiClient.post(
-        "/auth/logout",
-        {},
-        { signal: controller.signal }
-    )
-    return { request, cancel: () => controller.abort() }
+    try {
+        await authApi.post('/logout', {}, { signal: controller.signal })
+    } finally {
+        controller.abort()
+    }
 }
 
-const googleLogin = (credential: string) => {
+export const googleLogin = async (credential: string): Promise<UserResponse> => {
     const controller = new AbortController()
-    const request = apiClient.post<UserResponse>(
-        "/auth/google",
-        { credential },
-        { signal: controller.signal }
-    )
-    return { request, cancel: () => controller.abort() }
+    try {
+        const res = await authApi.post<UserResponse>('/google', { credential }, { signal: controller.signal })
+        return res.data
+    } finally {
+        controller.abort()
+    }
 }
 
-export default { authRegister, authLogin, authLogout, googleLogin }
+export default {
+    authRegister,
+    authLogin,
+    authLogout,
+    googleLogin,
+}

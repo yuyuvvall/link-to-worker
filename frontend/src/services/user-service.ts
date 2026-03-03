@@ -1,4 +1,3 @@
-// services/user-service.ts
 import apiClient from './api-client'
 import type { UserProfile, UpdateProfileData, UserResponse } from '../types/user'
 

@@ -37,8 +37,7 @@ const LoginForm = () => {
         setLoginError(null)
         setIsSubmitting(true)
         try {
-            const { request } = AuthService.authLogin(data)
-            await request
+            await AuthService.authLogin(data)
             navigate('/home')
         } catch (err: any) {
             if (err.response?.data?.message) {
@@ -56,8 +55,7 @@ const LoginForm = () => {
         setIsSubmitting(true)
         try {
             if (credentialResponse.credential) {
-                const { request } = AuthService.googleLogin(credentialResponse.credential)
-                await request
+                await AuthService.googleLogin(credentialResponse.credential)
                 navigate('/home')
             }
         } catch {

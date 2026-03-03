@@ -69,19 +69,17 @@ const RegistrationForm = () => {
                 imgUrl = await uploadImage(data.photo[0])
             }
 
-            const { request } = AuthService.authRegister({
+            await AuthService.authRegister({
                 username: data.username,
                 email: data.email,
                 password: data.password,
                 photo: imgUrl
             })
-            await request
 
-            const { request: loginRequest } = AuthService.authLogin({
+            await AuthService.authLogin({
                 email: data.email,
                 password: data.password
             })
-            await loginRequest
 
             navigate('/home')
         } catch (err: any) {
