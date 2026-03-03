@@ -3,10 +3,12 @@ import RegistrationForm from "./components/registration-form";
 import LoginForm from "./components/login-form";
 import { TabSelectorView } from "./pages";
 import HomePage from "./components/home-page";
+import CreatePost from "./components/create-post";
 import ProfilePage from "./components/profile-page";
 
 const siteTabs = [
   { name: "Home", redirect: "home", Component: HomePage },
+  { name: "Create Post", redirect: "create-post", Component: CreatePost },
   { name: "Profile", redirect: "profile", Component: ProfilePage },
 ];
 
