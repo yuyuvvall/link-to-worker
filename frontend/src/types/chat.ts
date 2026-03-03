@@ -9,5 +9,4 @@ export interface IMessage {
 export interface ChatProps {
     currentUserId: string;
     targetUserId: string;
-    targetUserName: string;
 }

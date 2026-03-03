@@ -5,6 +5,7 @@ export interface IMessage extends Document {
     receiverId: Types.ObjectId;
     content: string;
     createdAt: Date;
+    updatedAt: Date;
 }
 
 const messageSchema = new Schema<IMessage>(
@@ -13,7 +14,10 @@ const messageSchema = new Schema<IMessage>(
         receiverId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
         content: { type: String, required: true },
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+        versionKey: false,
+    }
 );
 
 export const Message = model<IMessage>('Message', messageSchema);

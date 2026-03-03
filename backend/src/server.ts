@@ -9,6 +9,7 @@ import authRouter from './routes/auth_route'
 import fileRouter from './routes/file_route'
 import postRouter from './routes/post_routes'
 import messageRouter from './routes/message_route'
+import userRouter from './routes/user_route'
 import { initSockets } from './sockets/socket'
 
 dotenv.config()
@@ -30,6 +31,7 @@ const initApp = async (): Promise<http.Server> => {
     app.use('/file', fileRouter)
     app.use('/post', postRouter)
     app.use('/message', messageRouter)
+    app.use('/user', userRouter)
 
     app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
         res.status(500).json({ status: 'fail', message: err.message })

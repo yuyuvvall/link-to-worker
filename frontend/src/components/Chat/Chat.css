@@ -4,7 +4,6 @@
     padding: 20px;
 }
 
-
 .chat-page {
     width: 95vw;
     height: 95vh;
@@ -65,15 +64,17 @@
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
     overflow-y: auto;
     background-color: #f9f9f9;
     scroll-behavior: smooth;
 }
 
+/* Add spacing between messages */
 .message-row {
     display: flex;
     width: 100%;
+    margin-bottom: 10px;
+    /* spacing between messages */
 }
 
 .message-row.sent {
@@ -100,6 +101,16 @@
     color: #050505;
 }
 
+/* Date header for messages */
+.chat-date {
+    text-align: center;
+    margin: 15px 0;
+    font-size: 12px;
+    color: #888;
+    font-weight: bold;
+}
+
+/* Footer / input */
 .chat-footer {
     display: flex;
     padding: 10px 15px;
@@ -141,6 +152,7 @@
     background-color: #0056b3;
 }
 
+/* Scrollbar styling */
 .messages-container::-webkit-scrollbar {
     width: 8px;
 }

@@ -4,8 +4,7 @@ import { ProfileCard, PostsList, EditForm } from '@link-to-worker/ui-kit'
 import type { PostProps, PostsListItem, EditFormEntry, EditFormGroupFieldEntry } from '@link-to-worker/ui-kit'
 import UserService from '../services/user-service'
 import PostService from '../services/post-service'
-import AuthService from '../services/auth-service'
-import type { UserProfile, UserBadge } from '../services/user-service'
+import type { UserProfile, UserBadge } from '../types/user'
 import type { PostData } from '../services/post-service'
 
 type EditFormState = {
@@ -67,7 +66,7 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
     if (initialProfile || !userId) {
       const auth = async () => {
         try {
-          const user = await AuthService.getCurrentUser()
+          const user = await UserService.getCurrentUser()
           if (!user) {
             navigate('/login')
           }
@@ -82,16 +81,11 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
       return
     }
 
-    const { request, cancel } = UserService.getUserProfile(userId ?? '')
-    request
-      .then((res) => {
-        setProfile(res.data)
-      })
-      .catch((err) => {
-        console.error('Failed to load profile', err)
-      })
-
-    return cancel
+    UserService.getUserProfile(userId ?? '').then((res) => {
+      setProfile(res)
+    }).catch((err) => {
+      console.error('Failed to load profile', err)
+    })
   }, [userId, initialProfile, navigate])
 
   useEffect(() => {
@@ -176,15 +170,14 @@ const ProfilePage = ({ initialProfile, initialPosts }: ProfilePageProps) => {
     if (!editFormData || !userId) return
 
     try {
-      const { request } = UserService.updateUserProfile(userId, {
+      const updatedProfile = await UserService.updateUserProfile(userId, {
         username: editFormData.username,
         location: editFormData.location || undefined,
         photo: editFormData.photo,
         bannerImageUrl: editFormData.bannerImageUrl || undefined,
         badges: editFormData.badges,
       })
-      const res = await request
-      setProfile(res.data)
+      setProfile(updatedProfile)
     } catch (err) {
       console.error('Failed to update profile', err)
     }
