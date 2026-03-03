@@ -6,7 +6,8 @@ const router = express.Router()
 
 router.use(authMiddleware)
 
-router.get('/:id', UserController.getUserById)
-router.patch('/', UserController.updateUser)
 router.get('/me', UserController.getCurrentUser)
+router.patch('/', UserController.updateUser)
+router.get('/:id', UserController.getUserById)
+
 export default router

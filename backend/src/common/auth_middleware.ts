@@ -15,6 +15,7 @@ const authMiddleware = (req: AuthenticatedRequest, res: Response, next: NextFunc
     try {
         const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as { _id: string }
         req.user = decoded
+        console.log(decoded);
         next()
     } catch (err: any) {
         return res.status(403).send(err.message)

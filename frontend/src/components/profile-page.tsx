@@ -4,7 +4,7 @@ import { ProfileCard, PostsList, EditForm } from '@link-to-worker/ui-kit'
 import type { PostProps, PostsListItem, EditFormEntry, EditFormGroupFieldEntry } from '@link-to-worker/ui-kit'
 import UserService from '../services/user-service'
 import PostService from '../services/post-service'
-import type { UserProfile, UserBadge } from '../services/user-service'
+import type { UserProfile, UserBadge } from 'src/types/user'
 import type { PostData } from '../services/post-service'
 
 type EditFormState = {

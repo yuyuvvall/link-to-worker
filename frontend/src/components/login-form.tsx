@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
 import type { CredentialResponse } from '@react-oauth/google'
 import AuthService from '../services/auth-service'
+import userService from '../services/user-service'
 
 type LoginFormData = {
     email: string
@@ -20,7 +21,7 @@ const LoginForm = () => {
     useEffect(() => {
         const check = async () => {
             try {
-                await AuthService.getCurrentUser()
+                await userService.getCurrentUser()
                 navigate('/home', { replace: true })
             } catch {
             } finally {

@@ -5,11 +5,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faImage } from '@fortawesome/free-solid-svg-icons'
 import apiClient from '../services/api-client'
 import AuthService from '../services/auth-service'
+import userService from '../services/user-service'
 
 const avatarImg = "https://via.placeholder.com/200?text=Avatar"
 
 type FormData = {
     photo: FileList
+    username: string
     email: string
     password: string
 }
@@ -27,7 +29,7 @@ const RegistrationForm = () => {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                await AuthService.getCurrentUser()
+                await userService.getCurrentUser()
                 navigate('/home', { replace: true })
             } catch { }
             finally {
@@ -68,6 +70,7 @@ const RegistrationForm = () => {
             }
 
             const { request } = AuthService.authRegister({
+                username: data.username,
                 email: data.email,
                 password: data.password,
                 photo: imgUrl
@@ -124,6 +127,14 @@ const RegistrationForm = () => {
                 />
 
                 <div className="vstack gap-2 mt-3">
+                    <input
+                        {...register("username", { required: "Username is required" })}
+                        type="text"
+                        className={`form-control ${errors.username ? 'is-invalid' : ''}`}
+                        placeholder="Username"
+                    />
+                    {errors.username && <div className="invalid-feedback">{errors.username.message}</div>}
+
                     <input
                         {...register("email", { required: "Email is required" })}
                         type="text"

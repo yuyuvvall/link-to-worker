@@ -1,15 +1,17 @@
 import apiClient from "./api-client"
 
 export interface RegistrationResponseData {
-    email: string
-    photo: string
     _id: string
+    email: string
+    username: string
+    photo?: string
 }
 
 export interface RegisterData {
     email: string
+    username: string
     password: string
-    photo: string
+    photo?: string
 }
 
 export interface LoginData {
@@ -20,6 +22,7 @@ export interface LoginData {
 export interface UserResponse {
     _id: string
     email: string
+    username: string
     photo?: string
 }
 
@@ -63,17 +66,17 @@ const googleLogin = (credential: string) => {
     return { request, cancel: () => controller.abort() }
 }
 
-const getCurrentUser = async (): Promise<UserResponse> => {
-    const controller = new AbortController()
-    try {
-        const res = await apiClient.get<UserResponse>(
-            "/auth/me",
-            { signal: controller.signal }
-        )
-        return res.data
-    } finally {
-        controller.abort()
-    }
-}
+// const getCurrentUser = async (): Promise<UserResponse> => {
+//     const controller = new AbortController()
+//     try {
+//         const res = await apiClient.get<UserResponse>(
+//             "/auth/me",
+//             { signal: controller.signal }
+//         )
+//         return res.data
+//     } finally {
+//         controller.abort()
+//     }
+// }
 
-export default { authRegister, authLogin, authLogout, googleLogin, getCurrentUser }
+export default { authRegister, authLogin, authLogout, googleLogin }

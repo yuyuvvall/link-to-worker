@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
 import Chat from '../components/Chat/Chat'
-import authService, { type UserResponse } from '../services/auth-service'
+import userService from '../services/user-service'
+import type { UserResponse } from '../types/user'
 
 const ChatPage = () => {
     const { receiverId } = useParams<{ receiverId: string }>()
@@ -11,7 +12,7 @@ const ChatPage = () => {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const user = await authService.getCurrentUser()
+                const user = await userService.getCurrentUser()
                 setCurrentUser(user)
             } catch (err) {
                 console.error('Failed to fetch current user', err)
