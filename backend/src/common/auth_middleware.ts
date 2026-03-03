@@ -1,21 +1,24 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 
-const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    const authHeader = req.headers['authorization']
-    const token = authHeader && authHeader.split(' ')[1]
+export interface AuthenticatedRequest extends Request {
+    user?: { _id: string }
+}
+
+const authMiddleware = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    const token = req.cookies?.accessToken
 
     if (!token) {
         return res.sendStatus(401)
     }
 
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string, (err, user) => {
-        if (err) {
-            return res.status(403).send(err.message)
-        }
-        req.user = user as { _id: string }
+    try {
+        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as { _id: string }
+        req.user = decoded
         next()
-    })
+    } catch (err: any) {
+        return res.status(403).send(err.message)
+    }
 }
 
 export default authMiddleware
