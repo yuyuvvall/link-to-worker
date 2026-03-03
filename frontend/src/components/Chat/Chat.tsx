@@ -10,11 +10,10 @@ const SOCKET_URL = import.meta.env.VITE_API_URL
 const Chat = ({ currentUserId, targetUserId }: ChatProps) => {
     const [messages, setMessages] = useState<IMessage[]>([])
     const [inputValue, setInputValue] = useState('')
-    const [targetUserName, setTargetUserName] = useState<string>('') // username state
+    const [targetUserName, setTargetUserName] = useState<string>('')
     const socketRef = useRef<Socket | null>(null)
     const scrollRef = useRef<HTMLDivElement | null>(null)
 
-    // Fetch target user info
     useEffect(() => {
         if (!targetUserId) return
         const fetchUser = async () => {
@@ -28,7 +27,6 @@ const Chat = ({ currentUserId, targetUserId }: ChatProps) => {
         fetchUser()
     }, [targetUserId])
 
-    // Fetch chat history
     useEffect(() => {
         if (!targetUserId) return
         const { request, cancel } = messageService.getChatHistory(targetUserId)
@@ -40,7 +38,6 @@ const Chat = ({ currentUserId, targetUserId }: ChatProps) => {
         return cancel
     }, [targetUserId])
 
-    // Socket.IO setup
     useEffect(() => {
         const socket = io(SOCKET_URL, { transports: ['websocket'], withCredentials: true })
         socketRef.current = socket
@@ -64,12 +61,10 @@ const Chat = ({ currentUserId, targetUserId }: ChatProps) => {
         }
     }, [currentUserId, targetUserId])
 
-    // Auto-scroll
     useEffect(() => {
         scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
     }, [messages])
 
-    // Send message
     const sendMessage = useCallback(
         (e: React.SyntheticEvent<HTMLFormElement>) => {
             e.preventDefault()
@@ -81,7 +76,6 @@ const Chat = ({ currentUserId, targetUserId }: ChatProps) => {
         [inputValue, targetUserId]
     )
 
-    // Group messages by day
     const groupedMessages = messages.reduce<Record<string, IMessage[]>>((acc, msg) => {
         const day = msg.createdAt ? new Date(msg.createdAt).toDateString() : 'Unknown'
         if (!acc[day]) acc[day] = []

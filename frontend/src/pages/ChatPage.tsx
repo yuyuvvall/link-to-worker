@@ -8,7 +8,7 @@ const ChatPage = () => {
     const { receiverId } = useParams<{ receiverId: string }>()
     const [currentUser, setCurrentUser] = useState<UserResponse | null>(null)
     const [loading, setLoading] = useState(true)
-    const [receiverExists, setReceiverExists] = useState(true) // new state
+    const [receiverExists, setReceiverExists] = useState(true)
 
     useEffect(() => {
         const fetchCurrentUser = async () => {
