@@ -1,5 +1,4 @@
 import { Request, Response } from 'express'
-import path from 'path'
 import fs from 'fs'
 
 export const uploadFile = (req: Request, res: Response) => {
@@ -8,18 +7,19 @@ export const uploadFile = (req: Request, res: Response) => {
             return res.status(400).json({ status: 'fail', message: 'No file uploaded' })
         }
 
-        const publicDir = path.resolve('public')
-        if (!fs.existsSync(publicDir)) {
-            fs.mkdirSync(publicDir, { recursive: true })
+        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+
+        if (!ALLOWED_TYPES.includes(req.file.mimetype)) {
+            fs.unlinkSync(req.file.path)
+            return res.status(400).json({ status: 'fail', message: 'Invalid file type' })
         }
 
-        const filePath = req.file.path.replace(/\\/g, '/')
+        const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`
+        const fileUrl = `${baseUrl}/public/uploads/${req.file.filename}`
 
-        const url = `http://${process.env.DOMAIN_BASE || 'localhost'}:${process.env.PORT || 5000}/${filePath}`
-
-        return res.status(200).json({ status: 'success', url })
-    } catch (err: any) {
-        console.error('File upload error:', err)
+        return res.json({ status: 'success', url: fileUrl })
+    } catch (err) {
+        console.error(err)
         return res.status(500).json({ status: 'error', message: 'File upload failed' })
     }
 }
