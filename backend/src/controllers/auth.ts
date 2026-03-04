@@ -48,34 +48,17 @@ const register = async (req: Request, res: Response) => {
     try {
         const { email, password, username, photo } = req.body
 
-        if (!email || !password || !username) {
-            return sendError(res, 400, 'Email, username and password are required')
-        }
-
-        if (!emailRegex.test(email)) {
-            return sendError(res, 400, 'Invalid email format')
-        }
+        if (!email || !password || !username) return sendError(res, 400, 'Email, username and password are required')
+        if (!emailRegex.test(email)) return sendError(res, 400, 'Invalid email format')
 
         const existingUser = await User.findOne({ $or: [{ email }, { username }] })
-        if (existingUser) {
-            return sendError(res, 409, 'Email or username already exists')
-        }
+        if (existingUser) return sendError(res, 409, 'Email or username already exists')
 
         const hashedPassword = await bcrypt.hash(password, 10)
 
-        const user = await User.create({
-            email,
-            password: hashedPassword,
-            username,
-            photo
-        })
+        const user = await User.create({ email, password: hashedPassword, username, photo: photo })
 
-        return res.status(201).json({
-            _id: user._id,
-            email: user.email,
-            username: user.username,
-            photo: user.photo
-        })
+        return res.status(201).json({ _id: user._id, email: user.email, username: user.username, photo: user.photo })
     } catch {
         return sendError(res, 500, 'Something went wrong')
     }
