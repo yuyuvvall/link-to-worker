@@ -7,5 +7,5 @@ const router = express.Router()
 router.post('/', authMiddleware, PostController.createPost.bind(PostController))
 router.post('/aiSearch', PostController.freeSearchPosts.bind(PostController))
 router.get('/:authorId', PostController.getPosts.bind(PostController))
-
+router.put('/:id/like',PostController.like.bind(PostController))
 export default router

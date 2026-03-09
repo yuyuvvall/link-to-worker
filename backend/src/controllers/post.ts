@@ -50,5 +50,30 @@ class PostController {
             res.status(500).json({ message: "Failed to create post" })
         }
     }
+    async like(req: AuthenticatedRequest, res: Response):Promise<Response| void>{
+        try{
+            const postId= req.params.id;
+            if (!req.user || !req.user._id) {
+                return res.status(401).json({ msg: 'Not authorized' });
+              }
+            const userId = req.user._id;
+            const post = await Post.findById(postId);
+            if (!post) {
+                return res.status(404).json({ msg: 'Post not found' });
+              }
+            const hasLiked = post.likes.some((id) => id.toString() === userId);
+            if (!hasLiked) {
+                post.likes = post.likes.filter((id) => id.toString() !== userId) as Types.ObjectId[];
+            } else {
+              post.likes.push(new Types.ObjectId(userId) as any); 
+            }
+
+            await post.save();
+            res.json(post.likes);
+        }catch (err) {
+            console.error((err as Error).message);
+            res.status(500).send('Error in like proccess');
+          }
+    }
 }
 export default new PostController();
