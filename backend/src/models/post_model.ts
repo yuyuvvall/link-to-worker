@@ -16,9 +16,12 @@ const postSchema = new Schema<IPost>({
   content: { type: String, required: true },
   photoUrl: { type: String },
   createdAt: { type: Date, default: Date.now },
-  // TODO: Connect to likes and comments schemas
-//   likes: { type: [Schema.Types.ObjectId], ref: "User", default: [] },
-//   comments: { type: [Schema.Types.ObjectId], ref: "User", default: [] },
+  likes: { type: [Schema.Types.ObjectId], ref: "User", default: [] }
+  // comments: [{
+  //   user: { type: Schema.Types.ObjectId, ref: 'User' },
+  //   text: { type: String, required: true },
+  //   date: { type: Date, default: Date.now }
+  // }]
 });
 
 export default model<IPost>("Post", postSchema);

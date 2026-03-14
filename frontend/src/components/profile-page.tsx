@@ -33,9 +33,9 @@ const mapPostsToListItems = (
     photoUrl: post.photoUrl,
     isLiked: false,
     // TODO: Implement likes and comments
-    // likesCount: post.likes.length,
+    likesCount: post.likes.length,
     // commentsCount: post.comments.length,
-    likesCount: 0,
+    // likesCount: 0,
     commentsCount: 0,
   }))
 }
@@ -113,6 +113,7 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
 
   const handleLikeClick = useCallback((postId: string) => {
     console.log('like clicked', postId)
+    return PostService.toggleLike(postId)
   }, [])
 
   const handleCommentClick = useCallback((postId: string) => {
