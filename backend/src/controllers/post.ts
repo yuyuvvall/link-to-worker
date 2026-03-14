@@ -50,7 +50,7 @@ class PostController {
             res.status(500).json({ message: "Failed to create post" })
         }
     }
-    async like(req: AuthenticatedRequest, res: Response):Promise<Response| void>{
+    async ToggleLike(req: AuthenticatedRequest, res: Response):Promise<Response| void>{
         try{
             const postId= req.params.id;
             if (!req.user || !req.user._id) {
@@ -62,7 +62,7 @@ class PostController {
                 return res.status(404).json({ msg: 'Post not found' });
               }
             const hasLiked = post.likes.some((id) => id.toString() === userId);
-            if (!hasLiked) {
+            if (hasLiked) {
                 post.likes = post.likes.filter((id) => id.toString() !== userId) as Types.ObjectId[];
             } else {
               post.likes.push(new Types.ObjectId(userId) as any); 
