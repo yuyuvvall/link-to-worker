@@ -43,27 +43,16 @@ const mapPostsToListItems = (
 const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps) => {
   const navigate = useNavigate()
 
+  const PAGE_SIZE = 5
+
   const [profile, setProfile] = useState<UserProfile | null>(initialProfile ?? null)
   const [postsData, setPostsData] = useState<PostData[]>(initialPosts ?? [])
+  const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(!initialPosts)
   const [isLoadingPosts, setIsLoadingPosts] = useState(false)
 
   const [isEditing, setIsEditing] = useState(false)
   const [editFormData, setEditFormData] = useState<EditFormState | null>(null)
-
-  // useEffect(() => {
-  //   const auth = async () => {
-  //     try {
-  //       const user = await AuthService.getCurrentUser()
-  //       if (!user) {
-  //         navigate('/login')
-  //       }
-  //     } catch {
-  //       navigate('/login')
-  //     }
-  //   }
-  //   auth()
-  // }, [navigate])
 
   useEffect(() => {
     if (initialProfile || !userId) {
@@ -97,10 +86,10 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
     const loadPosts = async () => {
       setIsLoadingPosts(true)
       try {
-        const { request } = PostService.getUserPosts(profile._id)
+        const { request } = PostService.getPosts(1, PAGE_SIZE, profile._id)
         const res = await request
         setPostsData(res.data)
-        setHasMore(false)
+        setHasMore(res.data.length === PAGE_SIZE)
       } catch (err: unknown) {
         console.error('Failed to load posts', err)
       } finally {
@@ -152,9 +141,22 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
     console.log('comment clicked', postId)
   }, [])
 
-  const handleEndReached = useCallback(() => {
-    console.log('end reached')
-  }, [])
+  const handleEndReached = useCallback(async () => {
+    if (isLoadingPosts || !hasMore || !profile) return
+    const nextPage = page + 1
+    setPage(nextPage)
+    setIsLoadingPosts(true)
+    try {
+      const { request } = PostService.getPosts(nextPage, PAGE_SIZE, profile._id)
+      const res = await request
+      setPostsData((prev) => [...prev, ...res.data])
+      setHasMore(res.data.length === PAGE_SIZE)
+    } catch (err: unknown) {
+      console.error('Failed to load more posts', err)
+    } finally {
+      setIsLoadingPosts(false)
+    }
+  }, [isLoadingPosts, hasMore, page, profile, PAGE_SIZE])
 
   const openEditForm = useCallback(() => {
     if (!profile) return
