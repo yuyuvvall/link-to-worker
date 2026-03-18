@@ -8,6 +8,7 @@ export interface IPost extends Document {
   comments: Types.ObjectId[];
   authorId: Types.ObjectId;
   createdAt: Date;
+  likeCount: number;
 }
 
 const postSchema = new Schema<IPost>({
@@ -16,9 +17,7 @@ const postSchema = new Schema<IPost>({
   content: { type: String, required: true },
   photoUrl: { type: String },
   createdAt: { type: Date, default: Date.now },
-  // TODO: Connect to likes and comments schemas
-//   likes: { type: [Schema.Types.ObjectId], ref: "User", default: [] },
-//   comments: { type: [Schema.Types.ObjectId], ref: "User", default: [] },
+  likeCount: { type: Number, default: 0 }
 });
 
 export default model<IPost>("Post", postSchema);

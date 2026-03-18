@@ -1,3 +1,4 @@
+import type { AxiosResponse } from 'axios'
 import apiClient from './api-client'
 
 export type PostData = {
@@ -6,7 +7,8 @@ export type PostData = {
   title: string
   content: string
   photoUrl?: string
-  likes: string[]
+  isLikedByUser : boolean
+  likeCount: number
   comments: string[]
   createdAt: string
 }
@@ -31,11 +33,13 @@ const createPost = (data: { title: string; content: string; photoUrl?: string })
   return { request, cancel: () => controller.abort() }
 }
 
-// TODO: implement toggleLike
-const toggleLike = (postId: string) => {
+const toggleLike = async (postId: string) => {
+  const controller = new AbortController()
   console.log('toggleLike called for post:', postId)
-  const request = Promise.resolve()
-  return { request, cancel: () => {} }
+  const response: AxiosResponse = await postApi.put(`/like/${postId}`, {}, {
+    signal: controller.signal,
+  })
+  return { response, cancel: () => controller.abort() }
 }
 
 export default { getUserPosts, createPost, toggleLike }

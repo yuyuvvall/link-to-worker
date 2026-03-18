@@ -31,11 +31,11 @@ const mapPostsToListItems = (
     username: profile.username,
     text: post.content,
     photoUrl: post.photoUrl,
-    isLiked: false,
+    isLiked: post.isLikedByUser ?? false,
+    likesCount: post.likeCount,
     // TODO: Implement likes and comments
-    // likesCount: post.likes.length,
     // commentsCount: post.comments.length,
-    likesCount: 0,
+    // likesCount: 0,
     commentsCount: 0,
   }))
 }
@@ -111,8 +111,41 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
     loadPosts()
   }, [profile, initialPosts])
 
-  const handleLikeClick = useCallback((postId: string) => {
-    console.log('like clicked', postId)
+  const handleLikeClick = useCallback(async (postId: string) => {
+    setPostsData((prevPosts) =>
+      prevPosts.map((post) => {
+        if (post._id !== postId) return post
+  
+        const isLiked = post.isLikedByUser ?? false
+  
+        return {
+          ...post,
+          isLikedByUser: !isLiked,
+          likeCount: isLiked ? post.likeCount - 1 : post.likeCount + 1,
+        }
+      })
+    )
+  
+    try {
+      await PostService.toggleLike(postId)
+    } catch (err) {
+      console.error('Failed to toggle like', err)
+  
+      // rollback if request fails
+      setPostsData((prevPosts) =>
+        prevPosts.map((post) => {
+          if (post._id !== postId) return post
+  
+          const isLiked = post.isLikedByUser ?? false
+  
+          return {
+            ...post,
+            isLikedByUser: !isLiked,
+            likeCount: isLiked ? post.likeCount - 1 : post.likeCount + 1,
+          }
+        })
+      )
+    }
   }, [])
 
   const handleCommentClick = useCallback((postId: string) => {
