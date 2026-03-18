@@ -5,6 +5,9 @@ export interface IUser extends Document {
     password: string;
     username: string;
     photo?: string;
+    location?: string;
+    bannerImageUrl?: string;
+    badges?: { iconUrl: string; label: string }[];
 }
 
 const userSchema = new Schema<IUser>(
@@ -13,6 +16,15 @@ const userSchema = new Schema<IUser>(
         password: { type: String, required: true },
         username: { type: String, required: true },
         photo: { type: String },
+        location: { type: String },
+        bannerImageUrl: { type: String },
+        badges: [
+            {
+                iconUrl: { type: String },
+                label: { type: String },
+                _id: false,
+            },
+        ],
     },
     {
         timestamps: false,
