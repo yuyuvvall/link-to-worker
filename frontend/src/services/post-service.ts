@@ -7,7 +7,8 @@ export type PostData = {
   title: string
   content: string
   photoUrl?: string
-  likes: string[]
+  isLikedByUser : boolean
+  likeCount: number
   comments: string[]
   createdAt: string
 }

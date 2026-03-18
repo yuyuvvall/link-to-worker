@@ -31,9 +31,9 @@ const mapPostsToListItems = (
     username: profile.username,
     text: post.content,
     photoUrl: post.photoUrl,
-    isLiked: false,
+    isLiked: post.isLikedByUser ?? false,
+    likesCount: post.likeCount,
     // TODO: Implement likes and comments
-    likesCount: post.likes.length,
     // commentsCount: post.comments.length,
     // likesCount: 0,
     commentsCount: 0,
@@ -111,9 +111,11 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
     loadPosts()
   }, [profile, initialPosts])
 
-  const handleLikeClick = useCallback((postId: string) => {
+  const handleLikeClick = useCallback(async (postId: string) => {
     console.log('like clicked', postId)
-    return PostService.toggleLike(postId)
+
+    const is_liked = await PostService.toggleLike(postId)
+    console.log('is_liked', is_liked.response.data.liked)
   }, [])
 
   const handleCommentClick = useCallback((postId: string) => {
