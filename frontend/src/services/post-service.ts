@@ -44,4 +44,12 @@ const toggleLike = async (postId: string) => {
   return { response, cancel: () => controller.abort() }
 }
 
-export default { getPosts, createPost, toggleLike }
+const updatePost = (postId: string, data: { title: string; content: string; photoUrl?: string }) => {
+  const controller = new AbortController()
+  const request = postApi.put<PostData>(`/${postId}`, data, {
+    signal: controller.signal,
+  })
+  return { request, cancel: () => controller.abort() }
+}
+
+export default { getPosts, createPost, toggleLike, updatePost }

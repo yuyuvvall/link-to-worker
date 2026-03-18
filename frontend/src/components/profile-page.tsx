@@ -6,6 +6,7 @@ import UserService from '../services/user-service'
 import PostService from '../services/post-service'
 import type { UserProfile, UserBadge } from '../types/user'
 import type { PostData } from '../services/post-service'
+import useEditPost from '../hooks/use-edit-post'
 
 type EditFormState = {
   username: string
@@ -24,6 +25,7 @@ export type ProfilePageProps = {
 const mapPostsToListItems = (
   postsData: PostData[],
   profile: UserProfile,
+  currentUserId?: string,
 ): PostsListItem<PostProps>[] => {
   return postsData.map((post) => ({
     id: post._id,
@@ -33,10 +35,8 @@ const mapPostsToListItems = (
     photoUrl: post.photoUrl,
     isLiked: post.isLikedByUser ?? false,
     likesCount: post.likeCount,
-    // TODO: Implement likes and comments
-    // commentsCount: post.comments.length,
-    // likesCount: 0,
     commentsCount: 0,
+    isEditable: post.authorId === currentUserId,
   }))
 }
 
@@ -51,33 +51,38 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
   const [hasMore, setHasMore] = useState(!initialPosts)
   const [isLoadingPosts, setIsLoadingPosts] = useState(false)
 
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null)
+
   const [isEditing, setIsEditing] = useState(false)
   const [editFormData, setEditFormData] = useState<EditFormState | null>(null)
 
+  const { editingPostId, handleEditClick, renderEditForm } = useEditPost(postsData, currentUser?._id, setPostsData)
+
   useEffect(() => {
-    if (initialProfile || !userId) {
-      const auth = async () => {
-        try {
-          const user = await UserService.getCurrentUser()
-          if (!user) {
-            navigate('/login')
-          }
-
-          setProfile(user)
-        } catch {
+    const fetchCurrentUser = async () => {
+      try {
+        const user = await UserService.getCurrentUser()
+        if (!user) {
           navigate('/login')
+          return
         }
+        setCurrentUser(user)
+        if (!userId || !initialProfile) {
+          setProfile(user)
+        }
+      } catch {
+        navigate('/login')
       }
-      auth()
-
-      return
     }
+    fetchCurrentUser()
 
-    UserService.getUserProfile(userId ?? '').then((res) => {
-      setProfile(res)
-    }).catch((err) => {
-      console.error('Failed to load profile', err)
-    })
+    if (userId && !initialProfile) {
+      UserService.getUserProfile(userId).then((res) => {
+        setProfile(res)
+      }).catch((err) => {
+        console.error('Failed to load profile', err)
+      })
+    }
   }, [userId, initialProfile, navigate])
 
   useEffect(() => {
@@ -104,9 +109,9 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
     setPostsData((prevPosts) =>
       prevPosts.map((post) => {
         if (post._id !== postId) return post
-  
+
         const isLiked = post.isLikedByUser ?? false
-  
+
         return {
           ...post,
           isLikedByUser: !isLiked,
@@ -114,19 +119,19 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
         }
       })
     )
-  
+
     try {
       await PostService.toggleLike(postId)
     } catch (err) {
       console.error('Failed to toggle like', err)
-  
+
       // rollback if request fails
       setPostsData((prevPosts) =>
         prevPosts.map((post) => {
           if (post._id !== postId) return post
-  
+
           const isLiked = post.isLikedByUser ?? false
-  
+
           return {
             ...post,
             isLikedByUser: !isLiked,
@@ -280,7 +285,7 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
     )
   }
 
-  const posts: PostsListItem<PostProps>[] = mapPostsToListItems(postsData, profile)
+  const posts: PostsListItem<PostProps>[] = mapPostsToListItems(postsData, profile, currentUser?._id)
 
   return (
     <div className="vstack gap-3 col-md-8 mx-auto mt-4">
@@ -317,6 +322,9 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
         onEndReached={handleEndReached}
         onLikeClick={handleLikeClick}
         onCommentClick={handleCommentClick}
+        onEditClick={handleEditClick}
+        editingPostId={editingPostId ?? undefined}
+        renderEditForm={renderEditForm}
       />
     </div>
   )
