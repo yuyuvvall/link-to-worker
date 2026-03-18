@@ -9,4 +9,5 @@ router.post('/aiSearch', PostController.freeSearchPosts.bind(PostController))
 router.get('/',authMiddleware, PostController.getPosts.bind(PostController))
 router.get('/:authorId',authMiddleware, PostController.getPosts.bind(PostController))
 router.put('/like/:id',authMiddleware,PostController.ToggleLike.bind(PostController))
+router.put('/:id', authMiddleware, PostController.updatePost.bind(PostController))
 export default router

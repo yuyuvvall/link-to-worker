@@ -13,6 +13,7 @@ export type PostProps = {
   commentsCount: number
   onLikeClick: () => void
   onCommentClick: () => void
+  onEditClick?: () => void
 }
 
 const Post = ({
@@ -25,6 +26,7 @@ const Post = ({
   commentsCount,
   onLikeClick,
   onCommentClick,
+  onEditClick,
 }: PostProps) => {
   return (
     <PostLayout
@@ -32,6 +34,7 @@ const Post = ({
         <PostHeader
           profileImageUrl={profileImageUrl}
           username={username}
+          onEditClick={onEditClick}
         />
       }
       content={

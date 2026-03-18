@@ -54,6 +54,41 @@ class PostController {
             res.status(500).json({ message: "Failed to create post" })
         }
     }
+    async updatePost(req: AuthenticatedRequest, res: Response) {
+        try {
+            const postId = req.params.id
+            const userId = req.user?._id
+
+            if (!userId) {
+                res.status(401).json({ message: "Not authorized" })
+                return
+            }
+
+            const { title, content, photoUrl } = req.body
+
+            if (!title || !content) {
+                res.status(400).json({ message: "Title and content are required" })
+                return
+            }
+
+            const post = await Post.findOneAndUpdate(
+                { _id: postId, authorId: userId },
+                { title, content, photoUrl },
+                { new: true },
+            )
+
+            if (!post) {
+                res.status(403).json({ message: "Post not found or not authorized to edit" })
+                return
+            }
+
+            res.status(200).json(post)
+        } catch (err: unknown) {
+            console.error("Failed to update post", err)
+            res.status(500).json({ message: "Failed to update post" })
+        }
+    }
+
     async ToggleLike(req: AuthenticatedRequest, res: Response): Promise<Response | void> {
         try {
             const postId = req.params.id;

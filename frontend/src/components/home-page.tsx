@@ -6,6 +6,7 @@ import UserService from '../services/user-service'
 import PostService from '../services/post-service'
 import type { PostData } from '../services/post-service'
 import type { UserProfile } from '../types/user'
+import useEditPost from '../hooks/use-edit-post'
 
 const PAGE_SIZE = 5
 
@@ -18,7 +19,10 @@ const HomePage = () => {
   const [hasMore, setHasMore] = useState(true)
   const [isLoadingPosts, setIsLoadingPosts] = useState(false)
   const [profilesCache, setProfilesCache] = useState<Map<string, UserProfile>>(new Map())
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null)
   const [authed, setAuthed] = useState(false)
+
+  const { editingPostId, handleEditClick, renderEditForm } = useEditPost(posts, currentUser?._id, setPosts)
 
   useEffect(() => {
     if (calledRef.current) return
@@ -26,7 +30,8 @@ const HomePage = () => {
 
     const checkAuth = async () => {
       try {
-        await UserService.getCurrentUser()
+        const user = await UserService.getCurrentUser()
+        setCurrentUser(user)
         setAuthed(true)
       } catch {
         navigate('/login')
@@ -142,6 +147,7 @@ const HomePage = () => {
         isLiked: post.isLikedByUser ?? false,
         likesCount: post.likeCount,
         commentsCount: 0,
+        isEditable: post.authorId === currentUser?._id,
       }
     })
   }
@@ -159,6 +165,9 @@ const HomePage = () => {
         onEndReached={handleEndReached}
         onLikeClick={handleLikeClick}
         onCommentClick={handleCommentClick}
+        onEditClick={handleEditClick}
+        editingPostId={editingPostId ?? undefined}
+        renderEditForm={renderEditForm}
       />
     </div>
   )
