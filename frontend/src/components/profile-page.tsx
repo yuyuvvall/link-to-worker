@@ -112,10 +112,40 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
   }, [profile, initialPosts])
 
   const handleLikeClick = useCallback(async (postId: string) => {
-    console.log('like clicked', postId)
-
-    const is_liked = await PostService.toggleLike(postId)
-    console.log('is_liked', is_liked.response.data.liked)
+    setPostsData((prevPosts) =>
+      prevPosts.map((post) => {
+        if (post._id !== postId) return post
+  
+        const isLiked = post.isLikedByUser ?? false
+  
+        return {
+          ...post,
+          isLikedByUser: !isLiked,
+          likeCount: isLiked ? post.likeCount - 1 : post.likeCount + 1,
+        }
+      })
+    )
+  
+    try {
+      await PostService.toggleLike(postId)
+    } catch (err) {
+      console.error('Failed to toggle like', err)
+  
+      // rollback if request fails
+      setPostsData((prevPosts) =>
+        prevPosts.map((post) => {
+          if (post._id !== postId) return post
+  
+          const isLiked = post.isLikedByUser ?? false
+  
+          return {
+            ...post,
+            isLikedByUser: !isLiked,
+            likeCount: isLiked ? post.likeCount - 1 : post.likeCount + 1,
+          }
+        })
+      )
+    }
   }, [])
 
   const handleCommentClick = useCallback((postId: string) => {
