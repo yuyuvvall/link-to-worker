@@ -17,9 +17,11 @@ const postApi = apiClient.create({
   baseURL: apiClient.defaults.baseURL + '/post',
 })
 
-const getUserPosts = (authorId: string) => {
+const getPosts = (page: number = 1, limit: number = 5, authorId?: string) => {
   const controller = new AbortController()
-  const request = postApi.get<PostData[]>(`/${authorId}`, {
+  const path = authorId ? `/${authorId}` : '/'
+  const request = postApi.get<PostData[]>(path, {
+    params: { page, limit },
     signal: controller.signal,
   })
   return { request, cancel: () => controller.abort() }
@@ -42,4 +44,4 @@ const toggleLike = async (postId: string) => {
   return { response, cancel: () => controller.abort() }
 }
 
-export default { getUserPosts, createPost, toggleLike }
+export default { getPosts, createPost, toggleLike }

@@ -20,17 +20,17 @@ class PostController {
 
     async getPosts(req: AuthenticatedRequest, res: Response) {
         try {
-            const authorId = req.params.authorId;
             if (!req.user || !req.user._id) {
                 return res.status(401).json({ msg: 'Not authorized' });
             }
             const userId = req.user._id;
-            if (authorId) {
-                const posts = await PostService.getPostsAgregation(authorId, userId);
-                res.status(200).json(posts);
-            } else {
-                res.status(400).json({ message: "Author ID is required" });
-            }
+            const authorId = req.params.authorId;
+            const page = Math.max(1, parseInt(req.query.page as string) || 1);
+            const limit = Math.max(1, Math.min(50, parseInt(req.query.limit as string) || 5));
+            const skip = (page - 1) * limit;
+
+            const posts = await PostService.getPostsAggregation(userId, skip, limit, authorId);
+            res.status(200).json(posts);
         } catch (err: any) {
             console.error("Failed to get posts", err);
             res.status(500).json({ message: "Failed to get posts" });
