@@ -52,4 +52,11 @@ const updatePost = (postId: string, data: { title: string; content: string; phot
   return { request, cancel: () => controller.abort() }
 }
 
-export default { getPosts, createPost, toggleLike, updatePost }
+const aiQuerySearch = (query:string)=> {
+  const controller = new AbortController()
+  const request = postApi.post<PostData[]>(`/aiSearch`, {query}, {
+    signal: controller.signal,
+  })
+  return { request, cancel: () => controller.abort() }
+}
+export default { getPosts, createPost, toggleLike, updatePost,aiQuerySearch }
