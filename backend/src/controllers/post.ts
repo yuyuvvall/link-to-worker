@@ -15,7 +15,8 @@ class PostController {
 
     async freeSearchPosts(req: Request, res: Response) {
         const query = req.body.query
-        return this.ai_search.search_posts_free_text(query)
+        const postsResult =  await this.ai_search.search_posts_free_text(query)
+        res.status(200).json(postsResult);
     }
 
     async getPosts(req: AuthenticatedRequest, res: Response) {

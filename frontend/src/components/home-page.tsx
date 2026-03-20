@@ -136,10 +136,15 @@ const HomePage = () => {
     console.log('comment clicked', postId)
   }, [])
   const handleAiSearchSubmit = useCallback(async (query:string )=> {
+    setIsLoadingPosts(true);
     try {
-      await PostService.aiQuerySearch(query)
+      const searchPosts = (await PostService.aiQuerySearch(query)).request.data
+      setPosts(searchPosts);
+      setPage(1);
     } catch (err) {
-      console.error('Failed to toggle like', err)
+      console.error('Failed to perform AI search', err);
+    } finally {
+      setIsLoadingPosts(false);
     }
   },[])
   const mapPostsToListItems = (): PostsListItem<PostProps>[] => {
@@ -166,7 +171,7 @@ const HomePage = () => {
   return (
     <div className="vstack gap-3 col-md-8 mx-auto mt-4">
       <SearchBar
-      onSubmit
+      onSubmit={handleAiSearchSubmit}
       />
       <PostsList
         posts={mapPostsToListItems()}
