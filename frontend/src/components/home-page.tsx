@@ -19,6 +19,7 @@ const HomePage = () => {
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [isLoadingPosts, setIsLoadingPosts] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [profilesCache, setProfilesCache] = useState<Map<string, UserProfile>>(new Map())
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null)
   const [authed, setAuthed] = useState(false)
@@ -135,18 +136,18 @@ const HomePage = () => {
   const handleCommentClick = useCallback((postId: string) => {
     console.log('comment clicked', postId)
   }, [])
-  const handleAiSearchSubmit = useCallback(async (query:string )=> {
-    setIsLoadingPosts(true);
+  const handleAiSearchSubmit = useCallback(async () => {
+    setIsLoadingPosts(true)
     try {
-      const searchPosts = (await PostService.aiQuerySearch(query)).request.data
-      setPosts(searchPosts);
+      const { request } = await PostService.aiQuerySearch(searchQuery)
+      setPosts(request.data);
       setPage(1);
     } catch (err) {
-      console.error('Failed to perform AI search', err);
+      console.error('Failed to perform AI search', err)
     } finally {
       setIsLoadingPosts(false);
     }
-  },[])
+  }, [searchQuery])
   const mapPostsToListItems = (): PostsListItem<PostProps>[] => {
     return posts.map((post) => {
       const authorProfile = profilesCache.get(post.authorId)
@@ -171,7 +172,10 @@ const HomePage = () => {
   return (
     <div className="vstack gap-3 col-md-8 mx-auto mt-4">
       <SearchBar
-      onSubmit={handleAiSearchSubmit}
+        value={searchQuery}
+        onChange={setSearchQuery}
+        onSubmit={handleAiSearchSubmit}
+        isLoading={isLoadingPosts}
       />
       <PostsList
         posts={mapPostsToListItems()}

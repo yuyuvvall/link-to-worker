@@ -1,61 +1,43 @@
-import React, { useState } from 'react';
+import { type FormEvent } from 'react'
+import IconButton from '@mui/material/IconButton'
+import TextField from '@mui/material/TextField'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
+import './search-bar.less'
 
-interface SearchBarProps {
-    onSubmit: (query: string) => void
+export type SearchBarProps = {
+  value: string
+  onChange: (value: string) => void
+  onSubmit: () => void
+  isLoading?: boolean
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ onSubmit }) => {
-    const [query, setQuery] = useState<string>('');
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
+const SearchBar = ({ value, onChange, onSubmit, isLoading = false }: SearchBarProps) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!value.trim()) return
+    onSubmit()
+  }
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+  return (
+    <form className="search-bar" onSubmit={handleSubmit}>
+      <TextField
+        className="search-bar__input"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Search..."
+        disabled={isLoading}
+        size="small"
+      />
+      <IconButton
+        className="search-bar__button"
+        type="submit"
+        disabled={isLoading || !value.trim()}
+      >
+        <FontAwesomeIcon icon={faMagnifyingGlass} />
+      </IconButton>
+    </form>
+  )
+}
 
-        if (!query.trim()) return;
-
-        setIsLoading(true);
-        setError(null);
-
-        try {
-            onSubmit(query);
-            console.log('Results fetched:');
-
-        } catch (err) {
-            if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError('An unexpected error occurred');
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    return (
-        <div className="search-container">
-            <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '8px' }}>
-                <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search..."
-                    disabled={isLoading}
-                    style={{ padding: '8px', fontSize: '16px' }}
-                />
-                <button
-                    type="submit"
-                    disabled={isLoading || !query.trim()}
-                    style={{ padding: '8px 16px', fontSize: '16px' }}
-                >
-                    {isLoading ? 'Searching...' : 'Search'}
-                </button>
-            </form>
-
-            {/* Conditional rendering for errors and results */}
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-        </div>
-    );
-};
-
-export default SearchBar;
+export default SearchBar
