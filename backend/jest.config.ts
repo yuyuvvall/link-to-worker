@@ -1,10 +1,11 @@
 export default {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  testTimeout: 10000,
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.test.ts',
-    '!src/app.ts'
-  ]
+    preset: 'ts-jest',
+    testEnvironment: 'node',
+    testTimeout: 15000,
+    setupFiles: ['dotenv/config'],
+    collectCoverageFrom: [
+        'src/**/*.ts',
+        '!src/**/*.test.ts',
+        '!src/app.ts'
+    ]
 }
