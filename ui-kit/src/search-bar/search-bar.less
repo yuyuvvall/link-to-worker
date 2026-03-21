@@ -1,0 +1,21 @@
+@search-bar-gap: 0.5em;
+@search-bar-button-color: #1976d2;
+@search-bar-button-disabled-color: #bdbdbd;
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: @search-bar-gap;
+
+  &__input {
+    flex: 1;
+  }
+
+  &__button {
+    color: @search-bar-button-color;
+
+    &:disabled {
+      color: @search-bar-button-disabled-color;
+    }
+  }
+}
