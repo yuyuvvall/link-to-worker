@@ -18,3 +18,5 @@ export type {
 } from './edit-form'
 
 export { ResponsiveAppBar } from './app-bar'
+
+export {SearchBar }from './search-bar'

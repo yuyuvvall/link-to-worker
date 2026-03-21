@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PostsList } from '@link-to-worker/ui-kit'
 import type { PostProps, PostsListItem } from '@link-to-worker/ui-kit'
+import { SearchBar } from '@link-to-worker/ui-kit'
 import UserService from '../services/user-service'
 import PostService from '../services/post-service'
 import type { PostData } from '../services/post-service'
@@ -134,7 +135,18 @@ const HomePage = () => {
   const handleCommentClick = useCallback((postId: string) => {
     console.log('comment clicked', postId)
   }, [])
-
+  const handleAiSearchSubmit = useCallback(async (query:string )=> {
+    setIsLoadingPosts(true);
+    try {
+      const searchPosts = (await PostService.aiQuerySearch(query)).request.data
+      setPosts(searchPosts);
+      setPage(1);
+    } catch (err) {
+      console.error('Failed to perform AI search', err);
+    } finally {
+      setIsLoadingPosts(false);
+    }
+  },[])
   const mapPostsToListItems = (): PostsListItem<PostProps>[] => {
     return posts.map((post) => {
       const authorProfile = profilesCache.get(post.authorId)
@@ -158,6 +170,9 @@ const HomePage = () => {
 
   return (
     <div className="vstack gap-3 col-md-8 mx-auto mt-4">
+      <SearchBar
+      onSubmit={handleAiSearchSubmit}
+      />
       <PostsList
         posts={mapPostsToListItems()}
         hasMore={hasMore}
