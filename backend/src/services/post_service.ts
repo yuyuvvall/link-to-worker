@@ -57,6 +57,18 @@ const getPostsAggregation = async (
             },
         },
         {
+            $lookup: {
+                from: "comments",
+                let: { postId: "$_id" },
+                pipeline: [
+                    { $match: { $expr: { $eq: ["$postId", "$$postId"] } } },
+                    { $sort: { createdAt: 1 } },
+                    { $project: { userId: 1, content: 1, createdAt: 1 } },
+                ],
+                as: "comments",
+            },
+        },
+        {
             $addFields: {
                 likeCount: {
                     $ifNull: [{ $arrayElemAt: ["$likeCountData.count", 0] }, 0],
@@ -64,6 +76,7 @@ const getPostsAggregation = async (
                 isLikedByUser: {
                     $gt: [{ $size: "$userLike" }, 0],
                 },
+                commentCount: { $size: "$comments" },
             },
         },
         {

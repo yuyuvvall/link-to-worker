@@ -4,6 +4,7 @@ import PostService from '../services/post_service'
 
 import Post from "../models/post_model";
 import Like from "../models/like_model";
+import Comment from "../models/comment_model";
 import PostsSearchService from '../services/posts_search_service'
 import { Types } from 'mongoose';
 
@@ -115,6 +116,27 @@ class PostController {
         } catch (err) {
             console.error((err as Error).message);
             res.status(500).send('Error in like proccess');
+        }
+    }
+
+    async addComment(req: AuthenticatedRequest, res: Response): Promise<Response | void> {
+        try {
+            const postId = req.params.id;
+            if (!req.user || !req.user._id) {
+                return res.status(401).json({ msg: 'Not authorized' });
+            }
+            const userId = req.user._id;
+            const { content } = req.body;
+
+            if (!content) {
+                return res.status(400).json({ message: 'Content is required' });
+            }
+
+            const comment = await Comment.create({ userId, postId, content });
+            return res.status(201).json(comment);
+        } catch (err: any) {
+            console.error(err.message);
+            res.status(500).send('Error adding comment');
         }
     }
 }
