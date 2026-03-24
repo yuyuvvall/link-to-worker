@@ -57,7 +57,7 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
   const [isEditing, setIsEditing] = useState(false)
   const [editFormData, setEditFormData] = useState<EditFormState | null>(null)
 
-  const { editingPostId, handleEditClick, renderEditForm } = useEditPost(postsData, currentUser?._id, setPostsData)
+  const { editingPostId, handleEditClick, handleDeleteClick, renderEditForm } = useEditPost(postsData, currentUser?._id, setPostsData)
   const { handleCommentClick, renderCommentModal } = useComments(postsData, setPostsData)
 
   useEffect(() => {
@@ -335,6 +335,7 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
         onLikeClick={handleLikeClick}
         onCommentClick={handleCommentClick}
         onEditClick={handleEditClick}
+        onDeleteClick={handleDeleteClick}
         editingPostId={editingPostId ?? undefined}
         renderEditForm={renderEditForm}
       />
