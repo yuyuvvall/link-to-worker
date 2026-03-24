@@ -5,6 +5,8 @@ import { TabSelectorView } from "./pages";
 import HomePage from "./components/home-page";
 import CreatePost from "./components/create-post";
 import ProfilePage from "./components/profile-page";
+import UserProfilePage from "./pages/user-profile-page";
+import ChatPage from "./pages/ChatPage";
 
 const siteTabs = [
   { name: "Home", redirect: "home", Component: HomePage },
@@ -20,6 +22,8 @@ function App() {
       {siteTabs.map(({redirect, Component}, index) => (
         <Route key={redirect} path={redirect} element={<TabSelectorView Component={Component} index={index} siteTabs={siteTabs} />} />
       ))}
+      <Route path="/user/:userId" element={<TabSelectorView Component={UserProfilePage} index={-1} siteTabs={siteTabs} />} />
+      <Route path="/chat/:userId" element={<TabSelectorView Component={ChatPage} index={-1} siteTabs={siteTabs} />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

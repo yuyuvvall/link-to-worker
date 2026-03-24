@@ -14,6 +14,7 @@ export type ProfileCardProps = {
   bannerImageUrl?: string
   badges?: ProfileCardBadge[]
   onEditClick?: () => void
+  onChatClick?: () => void
 }
 
 const ProfileCard = ({
@@ -23,6 +24,7 @@ const ProfileCard = ({
   bannerImageUrl,
   badges,
   onEditClick,
+  onChatClick,
 }: ProfileCardProps) => {
   return (
     <ProfileCardLayout
@@ -30,6 +32,7 @@ const ProfileCard = ({
         <ProfileCardBanner
           imageUrl={bannerImageUrl}
           onEditClick={onEditClick}
+          onChatClick={onChatClick}
         />
       }
       avatar={profileImageUrl 

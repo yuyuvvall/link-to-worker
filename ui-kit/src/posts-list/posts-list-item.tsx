@@ -8,10 +8,11 @@ export type PostsListItemProps = {
   onLikeClick: () => void
   onCommentClick: () => void
   onEditClick?: () => void
+  onUsernameClick?: () => void
 }
 
-const PostsListItem = ({ post, onLikeClick, onCommentClick, onEditClick }: PostsListItemProps) => {
-  const { id, isEditable, ...postData } = post
+const PostsListItem = ({ post, onLikeClick, onCommentClick, onEditClick, onUsernameClick }: PostsListItemProps) => {
+  const { id: _id, isEditable: _isEditable, authorId: _authorId, ...postData } = post
   return (
     <div className="posts-list-item">
       <Post
@@ -19,6 +20,7 @@ const PostsListItem = ({ post, onLikeClick, onCommentClick, onEditClick }: Posts
         onLikeClick={onLikeClick}
         onCommentClick={onCommentClick}
         onEditClick={onEditClick}
+        onUsernameClick={onUsernameClick}
       />
     </div>
   )

@@ -1,59 +1,56 @@
 import { useEffect, useState } from 'react'
-import { useParams, Navigate } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import Chat from '../components/Chat/Chat'
 import userService from '../services/user-service'
 import type { UserResponse } from '../types/user'
 
 const ChatPage = () => {
-    const { receiverId } = useParams<{ receiverId: string }>()
+    const { userId } = useParams<{ userId: string }>()
+    const navigate = useNavigate()
     const [currentUser, setCurrentUser] = useState<UserResponse | null>(null)
     const [loading, setLoading] = useState(true)
-    const [receiverExists, setReceiverExists] = useState(true)
 
     useEffect(() => {
-        const fetchCurrentUser = async () => {
-            try {
-                const user = await userService.getCurrentUser()
-                setCurrentUser(user)
-            } catch (err) {
-                console.error('Failed to fetch current user', err)
-            }
-        }
-
-        const checkReceiver = async () => {
-            if (!receiverId) {
-                setReceiverExists(false)
+        const initialize = async () => {
+            if (!userId) {
+                navigate('/home', { replace: true })
                 return
             }
-            try {
-                await userService.getUserProfile(receiverId)
-                setReceiverExists(true)
-            } catch (err) {
-                console.warn('Receiver user not found:', err)
-                setReceiverExists(false)
-            }
-        }
 
-        const initialize = async () => {
-            await fetchCurrentUser()
-            await checkReceiver()
+            let user: UserResponse
+            try {
+                user = await userService.getCurrentUser()
+            } catch {
+                navigate('/login', { replace: true })
+                return
+            }
+
+            if (user._id === userId) {
+                navigate('/profile', { replace: true })
+                return
+            }
+
+            try {
+                await userService.getUserProfile(userId)
+            } catch {
+                navigate('/home', { replace: true })
+                return
+            }
+
+            setCurrentUser(user)
             setLoading(false)
         }
 
         initialize()
-    }, [receiverId])
+    }, [userId, navigate])
 
-    if (loading) return <div>Loading...</div>
-
-    if (!receiverId || !receiverExists || !currentUser || receiverId === currentUser._id) {
-        return <Navigate to="/home" replace />
-    }
+    if (loading || !currentUser) return <div>Loading...</div>
 
     return (
         <div className="chat-wrapper">
             <Chat
                 currentUserId={currentUser._id}
-                targetUserId={receiverId}
+                targetUserId={userId!}
             />
         </div>
     )

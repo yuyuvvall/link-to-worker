@@ -14,6 +14,7 @@ export type PostProps = {
   onLikeClick: () => void
   onCommentClick: () => void
   onEditClick?: () => void
+  onUsernameClick?: () => void
 }
 
 const Post = ({
@@ -27,6 +28,7 @@ const Post = ({
   onLikeClick,
   onCommentClick,
   onEditClick,
+  onUsernameClick,
 }: PostProps) => {
   return (
     <PostLayout
@@ -35,6 +37,7 @@ const Post = ({
           profileImageUrl={profileImageUrl}
           username={username}
           onEditClick={onEditClick}
+          onUsernameClick={onUsernameClick}
         />
       }
       content={

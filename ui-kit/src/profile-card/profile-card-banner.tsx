@@ -1,13 +1,14 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faEdit } from '@fortawesome/free-solid-svg-icons'
+import { faEdit, faComment } from '@fortawesome/free-solid-svg-icons'
 import './profile-card-banner.less'
 
 export type ProfileCardBannerProps = {
   imageUrl?: string
   onEditClick?: () => void
+  onChatClick?: () => void
 }
 
-const ProfileCardBanner = ({ imageUrl, onEditClick }: ProfileCardBannerProps) => {
+const ProfileCardBanner = ({ imageUrl, onEditClick, onChatClick }: ProfileCardBannerProps) => {
   return (
     <div className="profile-card-banner">
       {imageUrl ? (
@@ -23,9 +24,18 @@ const ProfileCardBanner = ({ imageUrl, onEditClick }: ProfileCardBannerProps) =>
         <button
           className="profile-card-banner__edit-button"
           onClick={onEditClick}
-          aria-label="Edit banner"
+          aria-label="Edit profile"
         >
           <FontAwesomeIcon icon={faEdit} />
+        </button>
+      )}
+      {onChatClick && (
+        <button
+          className="profile-card-banner__edit-button"
+          onClick={onChatClick}
+          aria-label="Chat with user"
+        >
+          <FontAwesomeIcon icon={faComment} />
         </button>
       )}
     </div>

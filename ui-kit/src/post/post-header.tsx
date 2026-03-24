@@ -9,9 +9,10 @@ export type PostHeaderProps = {
   profileImageUrl: string
   username: string
   onEditClick?: () => void
+  onUsernameClick?: () => void
 }
 
-const PostHeader =({ profileImageUrl, username, onEditClick }: PostHeaderProps) => {
+const PostHeader = ({ profileImageUrl, username, onEditClick, onUsernameClick }: PostHeaderProps) => {
   return (
     <div className="post-header">
       <Avatar
@@ -20,9 +21,10 @@ const PostHeader =({ profileImageUrl, username, onEditClick }: PostHeaderProps) 
         alt={username}
       />
       <Typography
-        className="post-header__username"
+        className={`post-header__username${onUsernameClick ? ' post-header__username--clickable' : ''}`}
         variant="subtitle1"
         fontWeight="bold"
+        onClick={onUsernameClick}
       >
         {username}
       </Typography>

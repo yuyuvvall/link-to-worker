@@ -148,11 +148,20 @@ const HomePage = () => {
       setIsLoadingPosts(false);
     }
   }, [searchQuery])
+  const handleUsernameClick = useCallback((authorId: string) => {
+    if (authorId === currentUser?._id) {
+      navigate('/profile')
+    } else {
+      navigate(`/user/${authorId}`)
+    }
+  }, [currentUser, navigate])
+
   const mapPostsToListItems = (): PostsListItem<PostProps>[] => {
     return posts.map((post) => {
       const authorProfile = profilesCache.get(post.authorId)
       return {
         id: post._id,
+        authorId: post.authorId,
         profileImageUrl: authorProfile?.photo ?? '',
         username: authorProfile?.username ?? '',
         text: post.content,
@@ -187,6 +196,7 @@ const HomePage = () => {
         onEditClick={handleEditClick}
         editingPostId={editingPostId ?? undefined}
         renderEditForm={renderEditForm}
+        onUsernameClick={handleUsernameClick}
       />
     </div>
   )
