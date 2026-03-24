@@ -336,3 +336,61 @@ describe('Posts — Toggle Like', () => {
         expect(post.isLikedByUser).toBe(false)
     })
 })
+
+describe('Posts — Delete', () => {
+    let deletePostId: string
+
+    beforeAll(async () => {
+        const res = await request(app)
+            .post('/post')
+            .set('Cookie', cookiesA)
+            .send({ title: 'Post to delete', content: 'Will be deleted' })
+        deletePostId = res.body._id
+    })
+
+    test('delete post without auth returns 401', async () => {
+        const res = await request(app).delete(`/post/${deletePostId}`)
+        expect(res.status).toBe(401)
+    })
+
+    test('non-owner cannot delete post and gets 403', async () => {
+        const res = await request(app)
+            .delete(`/post/${deletePostId}`)
+            .set('Cookie', cookiesB)
+        expect(res.status).toBe(403)
+    })
+
+    test('delete non-existent post returns 403', async () => {
+        const fakeId = new mongoose.Types.ObjectId().toString()
+        const res = await request(app)
+            .delete(`/post/${fakeId}`)
+            .set('Cookie', cookiesA)
+        expect(res.status).toBe(403)
+    })
+
+    test('associated likes are cleaned up after delete', async () => {
+        // like the post first
+        await request(app)
+            .put(`/post/like/${deletePostId}`)
+            .set('Cookie', cookiesA)
+
+        const likesBefore = await Like.find({ postId: deletePostId })
+        expect(likesBefore.length).toBe(1)
+
+        // delete the post
+        const res = await request(app)
+            .delete(`/post/${deletePostId}`)
+            .set('Cookie', cookiesA)
+        expect(res.status).toBe(200)
+        expect(res.body.message).toBe('Post deleted')
+
+        const likesAfter = await Like.find({ postId: deletePostId })
+        expect(likesAfter.length).toBe(0)
+    })
+
+    test('deleted post no longer appears in get posts', async () => {
+        const res = await request(app).get('/post?limit=50').set('Cookie', cookiesA)
+        const found = res.body.find((p: any) => p._id === deletePostId)
+        expect(found).toBeUndefined()
+    })
+})
