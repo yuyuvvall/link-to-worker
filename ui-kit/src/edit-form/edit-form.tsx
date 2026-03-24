@@ -37,6 +37,7 @@ export type EditFormProps = {
   onCancel: () => void
   submitLabel?: string
   cancelLabel?: string
+  beforeActions?: React.ReactNode
 }
 
 const isGroupField = (entry: EditFormEntry): entry is EditFormGroupField => {
@@ -54,6 +55,7 @@ const EditForm = ({
   onCancel,
   submitLabel,
   cancelLabel,
+  beforeActions,
 }: EditFormProps) => {
   return (
     <EditFormLayout
@@ -91,6 +93,7 @@ const EditForm = ({
           })}
         </>
       }
+      beforeActions={beforeActions}
       actions={
         <EditFormActions
           onSubmit={onSubmit}

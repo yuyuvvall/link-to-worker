@@ -6,10 +6,11 @@ import './edit-form-layout.less'
 export type EditFormLayoutProps = {
   title: string
   body: ReactNode
+  beforeActions?: ReactNode
   actions: ReactNode
 }
 
-const EditFormLayout = ({ title, body, actions }: EditFormLayoutProps) => {
+const EditFormLayout = ({ title, body, beforeActions, actions }: EditFormLayoutProps) => {
   return (
     <Card className="edit-form-layout">
       <div className="edit-form-layout__header">
@@ -20,6 +21,11 @@ const EditFormLayout = ({ title, body, actions }: EditFormLayoutProps) => {
       <div className="edit-form-layout__body">
         {body}
       </div>
+      {beforeActions && (
+        <div className="edit-form-layout__before-actions">
+          {beforeActions}
+        </div>
+      )}
       <div className="edit-form-layout__actions">
         {actions}
       </div>
