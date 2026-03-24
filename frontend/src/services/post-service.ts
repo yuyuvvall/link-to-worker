@@ -1,15 +1,23 @@
 import type { AxiosResponse } from 'axios'
 import apiClient from './api-client'
 
+export type CommentData = {
+  _id: string
+  userId: string
+  content: string
+  createdAt: string
+}
+
 export type PostData = {
   _id: string
   authorId: string
   title: string
   content: string
   photoUrl?: string
-  isLikedByUser : boolean
+  isLikedByUser: boolean
   likeCount: number
-  comments: string[]
+  commentCount: number
+  comments: CommentData[]
   createdAt: string
 }
 
@@ -59,4 +67,12 @@ const aiQuerySearch = async (query:string)=> {
   })
   return { request, cancel: () => controller.abort() }
 }
-export default { getPosts, createPost, toggleLike, updatePost,aiQuerySearch }
+
+const addComment = async (postId: string, content: string) => {
+  const controller = new AbortController()
+  const request = await postApi.post<CommentData>(`/comment/${postId}`, { content }, {
+    signal: controller.signal,
+  })
+  return { request, cancel: () => controller.abort() }
+}
+export default { getPosts, createPost, toggleLike, updatePost,aiQuerySearch, addComment}

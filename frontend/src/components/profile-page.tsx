@@ -7,6 +7,7 @@ import PostService from '../services/post-service'
 import type { UserProfile, UserBadge } from '../types/user'
 import type { PostData } from '../services/post-service'
 import useEditPost from '../hooks/use-edit-post'
+import useComments from '../hooks/use-comments'
 
 type EditFormState = {
   username: string
@@ -35,7 +36,7 @@ const mapPostsToListItems = (
     photoUrl: post.photoUrl,
     isLiked: post.isLikedByUser ?? false,
     likesCount: post.likeCount,
-    commentsCount: 0,
+    commentsCount: post.commentCount,
     isEditable: post.authorId === currentUserId,
   }))
 }
@@ -57,6 +58,7 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
   const [editFormData, setEditFormData] = useState<EditFormState | null>(null)
 
   const { editingPostId, handleEditClick, renderEditForm } = useEditPost(postsData, currentUser?._id, setPostsData)
+  const { handleCommentClick, renderCommentModal } = useComments(postsData, setPostsData)
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -142,9 +144,6 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
     }
   }, [])
 
-  const handleCommentClick = useCallback((postId: string) => {
-    console.log('comment clicked', postId)
-  }, [])
 
   const handleEndReached = useCallback(async () => {
     if (isLoadingPosts || !hasMore || !profile) return
@@ -289,6 +288,7 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
 
   return (
     <div className="vstack gap-3 col-md-8 mx-auto mt-4">
+      {renderCommentModal}
       {isEditing && editFormData ? (
         <div className="d-flex justify-content-center">
           <EditForm

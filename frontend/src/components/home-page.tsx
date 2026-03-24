@@ -8,6 +8,7 @@ import PostService from '../services/post-service'
 import type { PostData } from '../services/post-service'
 import type { UserProfile } from '../types/user'
 import useEditPost from '../hooks/use-edit-post'
+import useComments from '../hooks/use-comments'
 
 const PAGE_SIZE = 5
 
@@ -25,6 +26,7 @@ const HomePage = () => {
   const [authed, setAuthed] = useState(false)
 
   const { editingPostId, handleEditClick, renderEditForm } = useEditPost(posts, currentUser?._id, setPosts)
+  const { handleCommentClick, renderCommentModal } = useComments(posts, setPosts)
 
   useEffect(() => {
     if (calledRef.current) return
@@ -133,9 +135,6 @@ const HomePage = () => {
     }
   }, [])
 
-  const handleCommentClick = useCallback((postId: string) => {
-    console.log('comment clicked', postId)
-  }, [])
   const handleAiSearchSubmit = useCallback(async () => {
     setIsLoadingPosts(true)
     try {
@@ -159,7 +158,7 @@ const HomePage = () => {
         photoUrl: post.photoUrl,
         isLiked: post.isLikedByUser ?? false,
         likesCount: post.likeCount,
-        commentsCount: 0,
+        commentsCount: post.commentCount,
         isEditable: post.authorId === currentUser?._id,
       }
     })
@@ -171,6 +170,7 @@ const HomePage = () => {
 
   return (
     <div className="vstack gap-3 col-md-8 mx-auto mt-4">
+      {renderCommentModal}
       <SearchBar
         value={searchQuery}
         onChange={setSearchQuery}
