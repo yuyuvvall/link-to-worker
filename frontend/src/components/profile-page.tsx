@@ -67,6 +67,10 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
           return
         }
         setCurrentUser(user)
+        if (userId && user._id === userId) {
+          navigate('/profile', { replace: true })
+          return
+        }
         if (!userId || !initialProfile) {
           setProfile(user)
         }
@@ -162,6 +166,13 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
       setIsLoadingPosts(false)
     }
   }, [isLoadingPosts, hasMore, page, profile, PAGE_SIZE])
+
+  const isOwnProfile = !!currentUser && !!profile && currentUser._id === profile._id
+
+  const handleOpenChat = useCallback(() => {
+    if (!profile) return
+    navigate(`/chat/${profile._id}`)
+  }, [profile, navigate])
 
   const openEditForm = useCallback(() => {
     if (!profile) return
@@ -310,7 +321,8 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
             location={profile.location}
             bannerImageUrl={profile.bannerImageUrl}
             badges={profile.badges}
-            onEditClick={openEditForm}
+            onEditClick={isOwnProfile ? openEditForm : undefined}
+            onChatClick={!isOwnProfile ? handleOpenChat : undefined}
           />
         </div>
       )}
