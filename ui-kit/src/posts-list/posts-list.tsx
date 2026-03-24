@@ -19,6 +19,7 @@ export type PostsListProps = {
   onLikeClick: (postId: string) => void;
   onCommentClick: (postId: string) => void;
   onEditClick?: (postId: string) => void;
+  onDeleteClick?: (postId: string) => void;
   editingPostId?: string;
   renderEditForm?: (postId: string) => ReactNode;
   onUsernameClick?: (authorId: string) => void;
@@ -32,6 +33,7 @@ const PostsList = ({
   onLikeClick,
   onCommentClick,
   onEditClick,
+  onDeleteClick,
   editingPostId,
   renderEditForm,
   onUsernameClick,
@@ -57,6 +59,11 @@ const PostsList = ({
               onEditClick={
                 onEditClick && post.isEditable
                   ? () => onEditClick(post.id)
+                  : undefined
+              }
+              onDeleteClick={
+                onDeleteClick && post.isEditable
+                  ? () => onDeleteClick(post.id)
                   : undefined
               }
               onUsernameClick={

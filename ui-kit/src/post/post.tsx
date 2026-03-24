@@ -14,6 +14,7 @@ export type PostProps = {
   onLikeClick: () => void
   onCommentClick: () => void
   onEditClick?: () => void
+  onDeleteClick?: () => void
   onUsernameClick?: () => void
 }
 
@@ -28,6 +29,7 @@ const Post = ({
   onLikeClick,
   onCommentClick,
   onEditClick,
+  onDeleteClick,
   onUsernameClick,
 }: PostProps) => {
   return (
@@ -37,6 +39,7 @@ const Post = ({
           profileImageUrl={profileImageUrl}
           username={username}
           onEditClick={onEditClick}
+          onDeleteClick={onDeleteClick}
           onUsernameClick={onUsernameClick}
         />
       }
