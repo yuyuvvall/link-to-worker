@@ -11,7 +11,8 @@ import postRouter from './routes/post_routes'
 import messageRouter from './routes/message_route'
 import userRouter from './routes/user_route'
 import { initSockets } from './sockets/socket'
-
+import swaggerUi from 'swagger-ui-express';
+import { specs } from './swagger';
 dotenv.config()
 
 const initApp = async (): Promise<http.Server> => {
@@ -36,7 +37,10 @@ const initApp = async (): Promise<http.Server> => {
     app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
         res.status(500).json({ status: 'fail', message: err.message })
     })
-
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs,{
+        swaggerOptions: {
+          withCredentials: true
+        }}));
     await mongoose.connect(process.env.DB_CONNECTION as string)
 
     const server = http.createServer(app)
@@ -44,7 +48,7 @@ const initApp = async (): Promise<http.Server> => {
         cors: {
             origin: 'http://localhost:5173',
             methods: ['GET', 'POST']
-        }
+        },
     })
 
     initSockets(io)
