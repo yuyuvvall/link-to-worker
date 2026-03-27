@@ -91,6 +91,33 @@ class PostController {
         }
     }
 
+    async deletePost(req: AuthenticatedRequest, res: Response) {
+        try {
+            const postId = req.params.id
+            const userId = req.user?._id
+
+            if (!userId) {
+                res.status(401).json({ message: "Not authorized" })
+                return
+            }
+
+            const post = await Post.findOneAndDelete({ _id: postId, authorId: userId })
+
+            if (!post) {
+                res.status(403).json({ message: "Post not found or not authorized to delete" })
+                return
+            }
+
+            await Like.deleteMany({ postId })
+            await Comment.deleteMany({ postId })
+
+            res.status(200).json({ message: "Post deleted" })
+        } catch (err: unknown) {
+            console.error("Failed to delete post", err)
+            res.status(500).json({ message: "Failed to delete post" })
+        }
+    }
+
     async ToggleLike(req: AuthenticatedRequest, res: Response): Promise<Response | void> {
         try {
             const postId = req.params.id;

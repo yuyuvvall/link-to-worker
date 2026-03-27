@@ -1,9 +1,15 @@
-@edit-button-color: #65676b;
+@action-button-color: #65676b;
 
 .post-header {
   display: flex;
   align-items: center;
-  gap: 0.75em;
+  justify-content: space-between;
+
+  &__user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75em;
+  }
 
   &__avatar {
     width: 3em;
@@ -22,9 +28,15 @@
     }
   }
 
-  &__edit-button {
-    margin-left: auto;
-    color: @edit-button-color;
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
+  }
+
+  &__edit-button,
+  &__delete-button {
+    color: @action-button-color;
     font-size: 0.75em;
   }
 }

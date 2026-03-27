@@ -477,4 +477,59 @@ router.get('/:authorId',authMiddleware, PostController.getPosts.bind(PostControl
 router.post('/comment/:id', authMiddleware, PostController.addComment.bind(PostController))
 router.put('/like/:id',authMiddleware,PostController.ToggleLike.bind(PostController))
 router.put('/:id', authMiddleware, PostController.updatePost.bind(PostController))
+
+/**
+ * @swagger
+ * /post/{id}:
+ *   delete:
+ *     summary: Delete a post
+ *     description: Deletes an existing post and its associated likes. Only the original author can delete their own post.
+ *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: MongoDB ObjectId of the post to delete
+ *         example: "64a1f2c3e4b0a1b2c3d4e5f6"
+ *     responses:
+ *       200:
+ *         description: Post deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Post deleted"
+ *       401:
+ *         description: Not authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               message: "Not authorized"
+ *       403:
+ *         description: Post not found or user is not the author
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               message: "Post not found or not authorized to delete"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               message: "Failed to delete post"
+ */
+router.delete('/:id', authMiddleware, PostController.deletePost.bind(PostController))
 export default router

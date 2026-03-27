@@ -60,6 +60,12 @@ const updatePost = (postId: string, data: { title: string; content: string; phot
   return { request, cancel: () => controller.abort() }
 }
 
+const deletePost = (postId: string) => {
+  const controller = new AbortController()
+  const request = postApi.delete(`/${postId}`, { signal: controller.signal })
+  return { request, cancel: () => controller.abort() }
+}
+
 const aiQuerySearch = async (query:string)=> {
   const controller = new AbortController()
   const request = await postApi.post<PostData[]>(`/aiSearch`, {query}, {
@@ -75,4 +81,4 @@ const addComment = async (postId: string, content: string) => {
   })
   return { request, cancel: () => controller.abort() }
 }
-export default { getPosts, createPost, toggleLike, updatePost,aiQuerySearch, addComment}
+export default { getPosts, createPost, toggleLike, updatePost, deletePost, aiQuerySearch, addComment }

@@ -40,6 +40,18 @@ const useEditPost = (
     setEditError(null)
   }, [posts, currentUserId])
 
+  const handleDeleteClick = useCallback(async (postId: string) => {
+    const post = posts.find((p) => p._id === postId)
+    if (!post || post.authorId !== currentUserId) return
+    try {
+      const { request } = PostService.deletePost(postId)
+      await request
+      setPosts((prev) => prev.filter((p) => p._id !== postId))
+    } catch {
+      setEditError('Failed to delete post. Please try again.')
+    }
+  }, [posts, currentUserId, setPosts])
+
   const handleFieldChange = useCallback((name: string, value: string) => {
     setEditFormData((prev) => {
       if (!prev) return prev
@@ -103,6 +115,26 @@ const useEditPost = (
     ]
   }, [editFormData])
 
+  const uploadButton = (
+    <>
+      <button
+        type="button"
+        className="btn btn-outline-secondary"
+        onClick={() => fileInputRef.current?.click()}
+      >
+        <FontAwesomeIcon icon={faUpload} className="me-2" />
+        Upload Photo
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleFileSelect}
+      />
+    </>
+  )
+
   const renderEditForm = useCallback(() => {
     if (!editFormData) return null
     return (
@@ -119,24 +151,8 @@ const useEditPost = (
           onCancel={handleCancel}
           submitLabel={isSubmitting ? 'Saving...' : 'Save'}
           cancelLabel="Cancel"
+          beforeActions={uploadButton}
         />
-        <div className="d-flex justify-content-center mt-2">
-          <button
-            type="button"
-            className="btn btn-outline-secondary"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <FontAwesomeIcon icon={faUpload} className="me-2" />
-            Upload Photo
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            style={{ display: 'none' }}
-            onChange={handleFileSelect}
-          />
-        </div>
       </>
     )
   }, [editFormData, editError, isSubmitting, handleFieldChange, handleSubmit, handleCancel, buildFields])
@@ -144,6 +160,7 @@ const useEditPost = (
   return {
     editingPostId,
     handleEditClick,
+    handleDeleteClick,
     renderEditForm,
   }
 }

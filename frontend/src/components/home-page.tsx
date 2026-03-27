@@ -25,7 +25,7 @@ const HomePage = () => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null)
   const [authed, setAuthed] = useState(false)
 
-  const { editingPostId, handleEditClick, renderEditForm } = useEditPost(posts, currentUser?._id, setPosts)
+  const { editingPostId, handleEditClick, handleDeleteClick, renderEditForm } = useEditPost(posts, currentUser?._id, setPosts)
   const { handleCommentClick, renderCommentModal } = useComments(posts, setPosts)
 
   useEffect(() => {
@@ -194,6 +194,7 @@ const HomePage = () => {
         onLikeClick={handleLikeClick}
         onCommentClick={handleCommentClick}
         onEditClick={handleEditClick}
+        onDeleteClick={handleDeleteClick}
         editingPostId={editingPostId ?? undefined}
         renderEditForm={renderEditForm}
         onUsernameClick={handleUsernameClick}
