@@ -397,6 +397,79 @@ const router = express.Router()
  *               message: "Failed to update post"
  */
 
+/**
+ * @swagger
+ * /post/comment/{id}:
+ *   post:
+ *     summary: Add a comment to a post
+ *     description: Creates a new comment on the specified post for the authenticated user.
+ *     tags: [Posts]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: MongoDB ObjectId of the post to comment on
+ *         example: "64a1f2c3e4b0a1b2c3d4e5f6"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - content
+ *             properties:
+ *               content:
+ *                 type: string
+ *                 description: The comment text
+ *                 example: "Great post!"
+ *     responses:
+ *       201:
+ *         description: Comment created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                   example: "64a1f2c3e4b0a1b2c3d4e5f8"
+ *                 postId:
+ *                   type: string
+ *                   example: "64a1f2c3e4b0a1b2c3d4e5f6"
+ *                 userId:
+ *                   type: string
+ *                   example: "64a1f2c3e4b0a1b2c3d4e5f7"
+ *                 content:
+ *                   type: string
+ *                   example: "Great post!"
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: Missing content field
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               message: "Content is required"
+ *       401:
+ *         description: Not authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *             example:
+ *               msg: "Not authorized"
+ *       500:
+ *         description: Internal server error
+ */
+
 router.post('/', authMiddleware, PostController.createPost.bind(PostController))
 router.post('/aiSearch', PostController.freeSearchPosts.bind(PostController))
 router.get('/',authMiddleware, PostController.getPosts.bind(PostController))
