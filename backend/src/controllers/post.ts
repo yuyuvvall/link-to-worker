@@ -5,6 +5,7 @@ import PostService from '../services/post_service'
 import Post from "../models/post_model";
 import Like from "../models/like_model";
 import Comment from "../models/comment_model";
+import User from "../models/user_model";
 import PostsSearchService from '../services/posts_search_service'
 import { Types } from 'mongoose';
 
@@ -160,7 +161,8 @@ class PostController {
             }
 
             const comment = await Comment.create({ userId, postId, content });
-            return res.status(201).json(comment);
+            const user = await User.findById(userId).select('username').lean();
+            return res.status(201).json({ ...comment.toObject(), authorName: (user as any)?.username ?? 'Unknown' });
         } catch (err: any) {
             console.error(err.message);
             res.status(500).send('Error adding comment');

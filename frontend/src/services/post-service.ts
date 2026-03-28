@@ -6,6 +6,7 @@ export type CommentData = {
   userId: string
   content: string
   createdAt: string
+  authorName: string
 }
 
 export type PostData = {
