@@ -63,7 +63,20 @@ const getPostsAggregation = async (
                 pipeline: [
                     { $match: { $expr: { $eq: ["$postId", "$$postId"] } } },
                     { $sort: { createdAt: 1 } },
-                    { $project: { userId: 1, content: 1, createdAt: 1 } },
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "userId",
+                            foreignField: "_id",
+                            as: "author",
+                        },
+                    },
+                    {
+                        $addFields: {
+                            authorName: { $ifNull: [{ $arrayElemAt: ["$author.username", 0] }, "Unknown"] },
+                        },
+                    },
+                    { $project: { userId: 1, content: 1, createdAt: 1, authorName: 1 } },
                 ],
                 as: "comments",
             },

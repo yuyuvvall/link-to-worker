@@ -48,6 +48,7 @@ const CommentPanel = ({ comments, onSubmit, onClose }: CommentPanelProps) => {
               <ul className="list-group list-group-flush">
                 {comments.map((comment) => (
                   <li key={comment._id} className="list-group-item px-0">
+                    <strong className="d-block mb-1">{comment.authorName}</strong>
                     <p className="mb-1">{comment.content}</p>
                     <small className="text-muted">
                       {new Date(comment.createdAt).toLocaleString()}
