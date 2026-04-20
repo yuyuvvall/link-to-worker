@@ -297,7 +297,7 @@ Ensure the JSON is strictly valid and can be parsed by JSON.parse().
     private buildPrompt(query: string): string {
         return `${this.systemPrompt}
 
-Parse this movie search query:
+Parse this free text search query:
 "${query.trim()}"
 
 Respond with the allowed JSON format only:`;
