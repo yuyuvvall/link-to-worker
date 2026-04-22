@@ -6,6 +6,7 @@
   "scripts": {
     "start": "tsc && node --env-file=.env ./dist/app.js",
     "dev": "nodemon  ./src/app.ts",
+    "prod1": "tsc -p tsconfig_prod.json",
     "build": "tsc",
     "test": "jest --runInBand --coverage --forceExit --detectOpenHandles"
   },
