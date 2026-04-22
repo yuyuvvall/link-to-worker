@@ -4,7 +4,8 @@
   "description": "A webapp that allows users to post, share and react about resume and career",
   "main": "dist/app.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn src/app.ts",
+    "start": "tsc && node --env-file=.env ./dist/src/app.js",
+    "dev": "nodemon  ./src/app.ts",
     "build": "tsc",
     "test": "jest --runInBand --coverage --forceExit --detectOpenHandles"
   },
