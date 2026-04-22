@@ -53,8 +53,8 @@ const initApp = async (): Promise<http.Server | https.Server> => {
 
     if (process.env.NODE_ENV === 'production') {
         const options = {
-            key: fs.readFileSync("../../../certs/client-key.pem"),
-            cert: fs.readFileSync("../../../certs/client-cert.pem"),
+            key: fs.readFileSync("../../certs/client-key.pem"),
+            cert: fs.readFileSync("../../certs/client-cert.pem"),
         }
 
         server = https.createServer(options, app)
