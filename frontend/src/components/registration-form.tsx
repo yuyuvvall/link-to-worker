@@ -7,7 +7,7 @@ import apiClient from '../services/api-client'
 import AuthService from '../services/auth-service'
 import userService from '../services/user-service'
 
-const avatarImg = "https://via.placeholder.com/200?text=Avatar"
+const avatarImg = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS8oghbsuzggpkknQSSU-Ch_xep_9v3m6EeBQ&s"
 
 type FormData = { photo: FileList; username: string; email: string; password: string }
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
