@@ -5,7 +5,9 @@ import mongoose from 'mongoose'
 import User from '../models/user_model'
 import Post from '../models/post_model'
 import Like from '../models/like_model'
+import Comment from '../models/comment_model'
 import { registerAndLogin } from './helpers/auth-helper'
+
 
 let app: Server
 
@@ -393,4 +395,92 @@ describe('Posts — Delete', () => {
         const found = res.body.find((p: any) => p._id === deletePostId)
         expect(found).toBeUndefined()
     })
+})
+
+describe('Posts — Add Comment', () => {
+
+    beforeAll(async () => {
+        await Comment.deleteMany({})
+    })
+
+    afterAll(async () => {
+        await Comment.deleteMany({})
+    })
+
+    test('add comment without authentication returns 401', async () => {
+        const res = await request(app)
+            .post(`/post/comment/${createdPostId}`)
+            .send({
+                content: 'Unauthorized comment'
+            })
+
+        expect(res.status).toBe(401)
+    })
+
+    test('add comment missing content returns 400', async () => {
+        const res = await request(app)
+            .post(`/post/comment/${createdPostId}`)
+            .set('Cookie', cookiesA)
+            .send({})
+
+        expect(res.status).toBe(400)
+        expect(res.body.message).toBe('Content is required')
+    })
+
+    test('add comment with valid data returns 201 and expected schema', async () => {
+        const res = await request(app)
+            .post(`/post/comment/${createdPostId}`)
+            .set('Cookie', cookiesA)
+            .send({
+                content: 'Great post!'
+            })
+
+        expect(res.status).toBe(201)
+
+        expect(res.body._id).toBeDefined()
+        expect(res.body.postId.toString()).toBe(createdPostId)
+        expect(res.body.userId.toString()).toBe(userAId)
+        expect(res.body.content).toBe('Great post!')
+
+        expect(res.body.createdAt).toBeDefined()
+        expect(new Date(res.body.createdAt).toString())
+            .not.toBe('Invalid Date')
+    })
+
+    test('response includes authorName added by controller', async () => {
+        const res = await request(app)
+            .post(`/post/comment/${createdPostId}`)
+            .set('Cookie', cookiesA)
+            .send({
+                content: 'Second comment'
+            })
+
+        expect(res.status).toBe(201)
+        expect(res.body.authorName).toBe(userAData.username)
+    })
+
+    test('different authenticated user can comment', async () => {
+        const res = await request(app)
+            .post(`/post/comment/${createdPostId}`)
+            .set('Cookie', cookiesB)
+            .send({
+                content: 'User B comment'
+            })
+
+        expect(res.status).toBe(201)
+        expect(res.body.userId).toBeDefined()
+        expect(res.body.content).toBe('User B comment')
+        expect(res.body.authorName).toBe(userBData.username)
+    })
+
+    test('comment is persisted in database', async () => {
+        const comment = await Comment.findOne({
+            content: 'Great post!'
+        })
+
+        expect(comment).toBeDefined()
+        expect(comment?.postId.toString()).toBe(createdPostId)
+        expect(comment?.userId.toString()).toBe(userAId)
+    })
+
 })

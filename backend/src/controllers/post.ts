@@ -17,7 +17,7 @@ class PostController {
 
     async freeSearchPosts(req: Request, res: Response) {
         const query = req.body.query
-        const postsResult =  await this.ai_search.search_posts_free_text(query)
+        const postsResult = await this.ai_search.search_posts_free_text(query)
         res.status(200).json(postsResult);
     }
 
@@ -119,7 +119,7 @@ class PostController {
         }
     }
 
-    async ToggleLike(req: AuthenticatedRequest, res: Response): Promise<Response | void> {
+    async toggleLike(req: AuthenticatedRequest, res: Response): Promise<Response | void> {
         try {
             const postId = req.params.id;
             if (!req.user || !req.user._id) {
