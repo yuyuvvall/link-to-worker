@@ -2,6 +2,21 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { fn } from 'storybook/test'
 import EditForm from './edit-form'
 
+const stubUpload = async (_name: string, _file: File) => {
+  await new Promise((resolve) => setTimeout(resolve, 600))
+  return 'https://picsum.photos/seed/uploaded/400/240'
+}
+
+const stubGroupUpload = async (
+  _groupName: string,
+  _index: number,
+  _fieldName: string,
+  _file: File,
+) => {
+  await new Promise((resolve) => setTimeout(resolve, 600))
+  return 'https://picsum.photos/seed/uploaded-badge/64/64'
+}
+
 const meta = {
   title: 'EditForm',
   component: EditForm,
@@ -16,6 +31,10 @@ const meta = {
     onGroupItemRemove: fn(),
     onSubmit: fn(),
     onCancel: fn(),
+    onImageUpload: stubUpload,
+    onGroupImageUpload: stubGroupUpload,
+    onImageUploadError: fn(),
+    onGroupImageUploadError: fn(),
   },
 } satisfies Meta<typeof EditForm>
 

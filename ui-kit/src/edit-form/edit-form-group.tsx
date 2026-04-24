@@ -24,6 +24,8 @@ export type EditFormGroupProps = {
   onFieldChange: (groupName: string, index: number, fieldName: string, value: string) => void
   onItemAdd: (groupName: string) => void
   onItemRemove: (groupName: string, index: number) => void
+  onImageUpload?: (groupName: string, index: number, fieldName: string, file: File) => Promise<string>
+  onImageUploadError?: (groupName: string, index: number, fieldName: string, error: unknown) => void
 }
 
 const EditFormGroup = ({
@@ -34,6 +36,8 @@ const EditFormGroup = ({
   onFieldChange,
   onItemAdd,
   onItemRemove,
+  onImageUpload,
+  onImageUploadError,
 }: EditFormGroupProps) => {
   const canAdd = maxItems === undefined || fields.length < maxItems
 
@@ -56,6 +60,16 @@ const EditFormGroup = ({
                   required={field.required}
                   placeholder={field.placeholder}
                   onChange={(_fieldName, value) => onFieldChange(name, index, field.name, value)}
+                  onImageUpload={
+                    onImageUpload
+                      ? (_fieldName, file) => onImageUpload(name, index, field.name, file)
+                      : undefined
+                  }
+                  onImageUploadError={
+                    onImageUploadError
+                      ? (_fieldName, error) => onImageUploadError(name, index, field.name, error)
+                      : undefined
+                  }
                 />
               ))}
             </div>

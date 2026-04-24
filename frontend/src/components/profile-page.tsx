@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ProfileCard, PostsList, EditForm } from '@link-to-worker/ui-kit'
 import type { PostProps, PostsListItem, EditFormEntry, EditFormGroupFieldEntry } from '@link-to-worker/ui-kit'
+import apiClient from '../services/api-client'
 import UserService from '../services/user-service'
 import PostService from '../services/post-service'
 import type { UserProfile, UserBadge } from '../types/user'
@@ -56,6 +57,7 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
 
   const [isEditing, setIsEditing] = useState(false)
   const [editFormData, setEditFormData] = useState<EditFormState | null>(null)
+  const [editError, setEditError] = useState<string | null>(null)
 
   const { editingPostId, handleEditClick, handleDeleteClick, renderEditForm } = useEditPost(postsData, currentUser?._id, setPostsData)
   const { handleCommentClick, renderCommentModal } = useComments(postsData, setPostsData)
@@ -182,8 +184,30 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
       bannerImageUrl: profile.bannerImageUrl ?? '',
       badges: profile.badges ?? [],
     })
+    setEditError(null)
     setIsEditing(true)
   }, [profile])
+
+  const uploadImage = useCallback(async (file: File) => {
+    const uploadData = new FormData()
+    uploadData.append('file', file)
+    const res = await apiClient.post('/file', uploadData, { withCredentials: true })
+    return res.data.url as string
+  }, [])
+
+  const handleImageUpload = useCallback(
+    async (_name: string, file: File) => uploadImage(file),
+    [uploadImage],
+  )
+
+  const handleGroupImageUpload = useCallback(
+    async (_groupName: string, _index: number, _fieldName: string, file: File) => uploadImage(file),
+    [uploadImage],
+  )
+
+  const handleImageUploadError = useCallback(() => {
+    setEditError('Failed to upload image. Please try again.')
+  }, [])
 
   const handleFieldChange = useCallback((name: string, value: string) => {
     setEditFormData((prev) => {
@@ -232,17 +256,19 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
         badges: editFormData.badges,
       })
       setProfile(updatedProfile)
+      setIsEditing(false)
+      setEditFormData(null)
+      setEditError(null)
     } catch (err) {
       console.error('Failed to update profile', err)
+      setEditError('Failed to update profile. Please try again.')
     }
-
-    setIsEditing(false)
-    setEditFormData(null)
   }, [editFormData, profile])
 
   const handleEditCancel = useCallback(() => {
     setIsEditing(false)
     setEditFormData(null)
+    setEditError(null)
   }, [])
 
   const buildEditFields = (): EditFormEntry[] => {
@@ -301,7 +327,8 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
     <div className="vstack gap-3 col-md-8 mx-auto mt-4">
       {renderCommentModal}
       {isEditing && editFormData ? (
-        <div className="d-flex justify-content-center">
+        <div className="vstack gap-2 align-items-center">
+          {editError && <div className="alert alert-danger text-center w-100">{editError}</div>}
           <EditForm
             title="Edit Profile"
             fields={buildEditFields()}
@@ -311,6 +338,10 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
             onGroupItemRemove={handleGroupItemRemove}
             onSubmit={handleEditSubmit}
             onCancel={handleEditCancel}
+            onImageUpload={handleImageUpload}
+            onGroupImageUpload={handleGroupImageUpload}
+            onImageUploadError={handleImageUploadError}
+            onGroupImageUploadError={handleImageUploadError}
           />
         </div>
       ) : (

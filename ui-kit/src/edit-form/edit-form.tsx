@@ -38,6 +38,10 @@ export type EditFormProps = {
   submitLabel?: string
   cancelLabel?: string
   beforeActions?: React.ReactNode
+  onImageUpload?: (name: string, file: File) => Promise<string>
+  onGroupImageUpload?: (groupName: string, index: number, fieldName: string, file: File) => Promise<string>
+  onImageUploadError?: (name: string, error: unknown) => void
+  onGroupImageUploadError?: (groupName: string, index: number, fieldName: string, error: unknown) => void
 }
 
 const isGroupField = (entry: EditFormEntry): entry is EditFormGroupField => {
@@ -56,6 +60,10 @@ const EditForm = ({
   submitLabel,
   cancelLabel,
   beforeActions,
+  onImageUpload,
+  onGroupImageUpload,
+  onImageUploadError,
+  onGroupImageUploadError,
 }: EditFormProps) => {
   return (
     <EditFormLayout
@@ -74,6 +82,8 @@ const EditForm = ({
                   onFieldChange={onGroupFieldChange}
                   onItemAdd={onGroupItemAdd}
                   onItemRemove={onGroupItemRemove}
+                  onImageUpload={onGroupImageUpload}
+                  onImageUploadError={onGroupImageUploadError}
                 />
               )
             }
@@ -88,6 +98,8 @@ const EditForm = ({
                 required={entry.required}
                 placeholder={entry.placeholder}
                 onChange={onFieldChange}
+                onImageUpload={onImageUpload}
+                onImageUploadError={onImageUploadError}
               />
             )
           })}
