@@ -22,7 +22,8 @@ const initApp = async (): Promise<http.Server> => {
     const app = express()
 
     const allowedOrigins = [
-        'http://node04.cs.colman.ac.il'
+        'http://node04.cs.colman.ac.il',
+        'https://node04.cs.colman.ac.il'
     ];
 
     app.use(cors({
