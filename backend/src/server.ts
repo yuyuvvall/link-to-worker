@@ -23,13 +23,24 @@ dotenv.config()
 const initApp = async (): Promise<http.Server> => {
     const app = express()
 
+    const allowedOrigins = [
+        'http://localhost:5173',
+        'http://node04.cs.colman.ac.il'
+    ];
+
     app.use(cors({
-        origin: true,
+        origin: function (origin, callback) {
+            if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+                callback(null, true);
+            } else {
+                callback(new Error('CORS Error'));
+            }
+        },
         credentials: true
     }))
 
     app.use((req, res, next) => {
-        res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups")
+        res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none")
         res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none")
         next()
     })
@@ -39,7 +50,6 @@ const initApp = async (): Promise<http.Server> => {
     app.use(express.urlencoded({ extended: true }))
 
     app.use('/public', express.static(path.join(__dirname, 'public')))
-
     app.use(express.static(path.join(__dirname, 'public')))
 
     app.use('/auth', authRouter)
@@ -68,7 +78,7 @@ const initApp = async (): Promise<http.Server> => {
 
     const io = new Server(server, {
         cors: {
-            origin: true,
+            origin: allowedOrigins,
             methods: ['GET', 'POST'],
             credentials: true
         }
