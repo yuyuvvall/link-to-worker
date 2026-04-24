@@ -15,6 +15,7 @@ import { initSockets } from './sockets/socket'
 import swaggerUi from 'swagger-ui-express'
 import { specs } from './swagger'
 import path from 'path'
+import mongoose from 'mongoose'
 
 dotenv.config()
 
@@ -69,6 +70,8 @@ const initApp = async (): Promise<http.Server> => {
     app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
         res.status(500).json({ status: 'fail', message: err.message })
     })
+
+    await mongoose.connect(process.env.DB_CONNECTION as string)
 
     let server: http.Server | https.Server
 

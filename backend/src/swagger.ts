@@ -10,7 +10,7 @@ const port = isProduction
   ? process.env.HTTPS_PORT
   : process.env.HTTP_PORT;
 
-const host = process.env.HOST || 'localhost';
+const host = process.env.DOMAIN_BASE || 'localhost';
 
 const options: swaggerJsdoc.Options = {
   definition: {
