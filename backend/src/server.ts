@@ -24,7 +24,6 @@ const initApp = async (): Promise<http.Server> => {
     const app = express()
 
     const allowedOrigins = [
-        'http://localhost:5173',
         'http://node04.cs.colman.ac.il'
     ];
 

@@ -20,7 +20,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'http://localhost:80',
+        url: 'http://node04.cs.colman.ac.il:80',
       },
     ],
   },
