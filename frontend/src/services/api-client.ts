@@ -1,15 +1,15 @@
 // services/api-client.ts
-import axios from 'axios'
+import axios from 'axios';
 
 const apiClient = axios.create({
-    baseURL: 'http://localhost:3000',
+    baseURL: '', // same origin (no hardcoding!)
     withCredentials: true,
-})
+});
 
 apiClient.interceptors.response.use(
     (response) => response,
     async (error) => {
-        const originalRequest = error.config
+        const originalRequest = error.config;
 
         if (
             originalRequest.url?.includes('/auth/login') ||
@@ -17,28 +17,28 @@ apiClient.interceptors.response.use(
             originalRequest.url?.includes('/auth/register') ||
             originalRequest.url?.includes('/auth/refreshToken')
         ) {
-            return Promise.reject(error)
+            return Promise.reject(error);
         }
 
         if (error.response?.status === 403 && !originalRequest._retry) {
-            originalRequest._retry = true
+            originalRequest._retry = true;
             try {
                 await axios.post(
-                    'http://localhost:3000/auth/refreshToken',
+                    '/auth/refreshToken', // ← relative path
                     {},
                     { withCredentials: true }
-                )
-                return apiClient(originalRequest)
+                );
+                return apiClient(originalRequest);
             } catch (refreshError) {
                 if (window.location.pathname !== '/login') {
-                    window.location.href = '/login'
+                    window.location.href = '/login';
                 }
-                return Promise.reject(refreshError)
+                return Promise.reject(refreshError);
             }
         }
 
-        return Promise.reject(error)
+        return Promise.reject(error);
     }
-)
+);
 
-export default apiClient
+export default apiClient;

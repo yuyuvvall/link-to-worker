@@ -1,14 +1,16 @@
-import path from 'path';
 import swaggerJsdoc from 'swagger-jsdoc';
-/**
- * @swagger
- * components:
- *   securitySchemes:
- *     cookieAuth:
- *       type: apiKey
- *       in: cookie
- *       name: accessToken
- */
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+const protocol = isProduction ? 'https' : 'http';
+const port = isProduction
+  ? process.env.HTTPS_PORT
+  : process.env.HTTP_PORT;
+
+const host = process.env.DOMAIN_BASE || 'localhost';
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -20,11 +22,11 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000',
+        url: `${protocol}://${host}:${port}`,
       },
     ],
   },
-  apis: ['src/routes/*.ts'], 
+  apis: ['src/routes/*.ts'],
 };
 
 export const specs = swaggerJsdoc(options);
