@@ -5,6 +5,7 @@ import dotenv from 'dotenv'
 import mongoose from 'mongoose'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
+import path from 'path'
 
 import authRouter from './routes/auth_route'
 import fileRouter from './routes/file_route'
@@ -23,7 +24,7 @@ const initApp = async (): Promise<http.Server> => {
     const app = express()
 
     app.use(cors({
-        origin: 'http://localhost:5173',
+        origin: true,
         credentials: true
     }))
 
@@ -36,7 +37,10 @@ const initApp = async (): Promise<http.Server> => {
     app.use(cookieParser())
     app.use(express.json())
     app.use(express.urlencoded({ extended: true }))
-    app.use('/public', express.static('public'))
+
+    app.use('/public', express.static(path.join(__dirname, 'public')))
+
+    app.use(express.static(path.join(__dirname, 'public')))
 
     app.use('/auth', authRouter)
     app.use('/file', fileRouter)
@@ -50,6 +54,10 @@ const initApp = async (): Promise<http.Server> => {
         }
     }))
 
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'index.html'))
+    })
+
     app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
         res.status(500).json({ status: 'fail', message: err.message })
     })
@@ -60,7 +68,7 @@ const initApp = async (): Promise<http.Server> => {
 
     const io = new Server(server, {
         cors: {
-            origin: 'http://localhost:5173',
+            origin: true,
             methods: ['GET', 'POST'],
             credentials: true
         }
