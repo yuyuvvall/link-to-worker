@@ -39,7 +39,10 @@ const Chat = ({ currentUserId, targetUserId }: ChatProps) => {
     }, [targetUserId])
 
     useEffect(() => {
-        const socket = io(SOCKET_URL, { transports: ['websocket'], withCredentials: true })
+        const socket = io({
+            transports: ['websocket'],
+            withCredentials: true,
+        });
         socketRef.current = socket
 
         const handleReceiveMessage = (message: IMessage) => {

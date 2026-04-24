@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-    baseURL: '',
+    baseURL: '', // same origin (no hardcoding!)
     withCredentials: true,
 });
 
@@ -24,7 +24,7 @@ apiClient.interceptors.response.use(
             originalRequest._retry = true;
             try {
                 await axios.post(
-                    '/auth/refreshToken',
+                    '/auth/refreshToken', // ← relative path
                     {},
                     { withCredentials: true }
                 );
