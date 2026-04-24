@@ -85,10 +85,8 @@ const initApp = async (): Promise<http.Server> => {
         }
 
         server = https.createServer(options, app)
-        console.log('Running in PRODUCTION (HTTPS)')
     } else {
         server = http.createServer(app)
-        console.log('Running in DEVELOPMENT (HTTP)')
     }
     const io = new Server(server, {
         cors: {
