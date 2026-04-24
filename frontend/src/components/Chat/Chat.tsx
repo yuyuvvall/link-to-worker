@@ -5,8 +5,6 @@ import userService from '../../services/user-service'
 import type { IMessage, ChatProps } from '../../types/chat'
 import './Chat.css'
 
-const SOCKET_URL = import.meta.env.VITE_API_URL
-
 const Chat = ({ currentUserId, targetUserId }: ChatProps) => {
     const [messages, setMessages] = useState<IMessage[]>([])
     const [inputValue, setInputValue] = useState('')
