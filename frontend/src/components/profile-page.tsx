@@ -306,7 +306,7 @@ const ProfilePage = ({ initialProfile, initialPosts, userId }: ProfilePageProps)
         label: 'Badges',
         type: 'group-list' as const,
         fields: editFormData.badges.map<EditFormGroupFieldEntry[]>((b) => [
-          { name: 'iconUrl', label: 'Icon URL', type: 'image' as const, value: b.iconUrl },
+          { name: 'iconUrl', label: 'Icon', type: 'image' as const, value: b.iconUrl },
           { name: 'label', label: 'Label', type: 'text' as const, value: b.label },
         ]),
       },

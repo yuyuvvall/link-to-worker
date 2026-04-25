@@ -78,11 +78,11 @@ export const Default: Story = {
         type: 'group-list',
         fields: [
           [
-            { name: 'iconUrl', label: 'Icon URL', type: 'image', value: 'https://logo.clearbit.com/thecheesecakefactory.com' },
+            { name: 'iconUrl', label: 'Icon', type: 'image', value: 'https://logo.clearbit.com/thecheesecakefactory.com' },
             { name: 'label', label: 'Label', type: 'text', value: 'The Cheesecake Factory' },
           ],
           [
-            { name: 'iconUrl', label: 'Icon URL', type: 'image', value: 'https://logo.clearbit.com/colman.ac.il' },
+            { name: 'iconUrl', label: 'Icon', type: 'image', value: 'https://logo.clearbit.com/colman.ac.il' },
             { name: 'label', label: 'Label', type: 'text', value: 'The College of Management Academic Studies' },
           ],
         ],
@@ -133,27 +133,27 @@ export const ManyGroupItems: Story = {
         type: 'group-list',
         fields: [
           [
-            { name: 'iconUrl', label: 'Icon URL', type: 'image', value: 'https://logo.clearbit.com/thecheesecakefactory.com' },
+            { name: 'iconUrl', label: 'Icon', type: 'image', value: 'https://logo.clearbit.com/thecheesecakefactory.com' },
             { name: 'label', label: 'Label', type: 'text', value: 'The Cheesecake Factory' },
           ],
           [
-            { name: 'iconUrl', label: 'Icon URL', type: 'image', value: 'https://picsum.photos/seed/pingpong/32/32' },
+            { name: 'iconUrl', label: 'Icon', type: 'image', value: 'https://picsum.photos/seed/pingpong/32/32' },
             { name: 'label', label: 'Label', type: 'text', value: 'Ping Pong Professional' },
           ],
           [
-            { name: 'iconUrl', label: 'Icon URL', type: 'image', value: 'https://logo.clearbit.com/tau.ac.il' },
+            { name: 'iconUrl', label: 'Icon', type: 'image', value: 'https://logo.clearbit.com/tau.ac.il' },
             { name: 'label', label: 'Label', type: 'text', value: 'Academic Studies - Tel Aviv University' },
           ],
           [
-            { name: 'iconUrl', label: 'Icon URL', type: 'image', value: 'https://picsum.photos/seed/guitar/32/32' },
+            { name: 'iconUrl', label: 'Icon', type: 'image', value: 'https://picsum.photos/seed/guitar/32/32' },
             { name: 'label', label: 'Label', type: 'text', value: 'Guitar Player' },
           ],
           [
-            { name: 'iconUrl', label: 'Icon URL', type: 'image', value: 'https://picsum.photos/seed/cook/32/32' },
+            { name: 'iconUrl', label: 'Icon', type: 'image', value: 'https://picsum.photos/seed/cook/32/32' },
             { name: 'label', label: 'Label', type: 'text', value: 'Home Cooking Expert' },
           ],
           [
-            { name: 'iconUrl', label: 'Icon URL', type: 'image', value: 'https://picsum.photos/seed/photo/32/32' },
+            { name: 'iconUrl', label: 'Icon', type: 'image', value: 'https://picsum.photos/seed/photo/32/32' },
             { name: 'label', label: 'Label', type: 'text', value: 'Photography Hobbyist' },
           ],
         ],
