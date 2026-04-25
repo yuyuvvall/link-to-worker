@@ -1,9 +1,7 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { EditForm } from '@link-to-worker/ui-kit'
 import type { EditFormEntry } from '@link-to-worker/ui-kit'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faUpload } from '@fortawesome/free-solid-svg-icons'
 import apiClient from '../services/api-client'
 import PostService from '../services/post-service'
 
@@ -15,7 +13,6 @@ type CreatePostFormState = {
 
 const CreatePost = () => {
   const navigate = useNavigate()
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const [formData, setFormData] = useState<CreatePostFormState>({
     title: '',
@@ -36,19 +33,16 @@ const CreatePost = () => {
   const handleGroupItemAdd = useCallback(() => {}, [])
   const handleGroupItemRemove = useCallback(() => {}, [])
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const handleImageUpload = useCallback(async (_name: string, file: File) => {
+    const uploadData = new FormData()
+    uploadData.append('file', file)
+    const res = await apiClient.post('/file', uploadData, { withCredentials: true })
+    return res.data.url as string
+  }, [])
 
-    try {
-      const uploadData = new FormData()
-      uploadData.append('file', file)
-      const res = await apiClient.post('/file', uploadData, { withCredentials: true })
-      setFormData((prev) => ({ ...prev, photo: res.data.url }))
-    } catch {
-      setFormError('Failed to upload image. Please try again.')
-    }
-  }
+  const handleImageUploadError = useCallback(() => {
+    setFormError('Failed to upload image. Please try again.')
+  }, [])
 
   const handleSubmit = useCallback(async () => {
     setFormError(null)
@@ -115,26 +109,10 @@ const CreatePost = () => {
           onGroupItemRemove={handleGroupItemRemove}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
+          onImageUpload={handleImageUpload}
+          onImageUploadError={handleImageUploadError}
           submitLabel={isSubmitting ? 'Publishing...' : 'Publish'}
           cancelLabel="Cancel"
-        />
-      </div>
-
-      <div className="d-flex justify-content-center">
-        <button
-          type="button"
-          className="btn btn-outline-secondary"
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <FontAwesomeIcon icon={faUpload} className="me-2" />
-          Upload Photo
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          style={{ display: 'none' }}
-          onChange={handleFileSelect}
         />
       </div>
     </div>

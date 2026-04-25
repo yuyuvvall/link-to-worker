@@ -1,8 +1,6 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import { EditForm } from '@link-to-worker/ui-kit'
 import type { EditFormEntry } from '@link-to-worker/ui-kit'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faUpload } from '@fortawesome/free-solid-svg-icons'
 import apiClient from '../services/api-client'
 import PostService from '../services/post-service'
 import type { PostData } from '../services/post-service'
@@ -26,7 +24,6 @@ const useEditPost = (
   const [editFormData, setEditFormData] = useState<EditPostFormState | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleEditClick = useCallback((postId: string) => {
     const post = posts.find((p) => p._id === postId)
@@ -59,18 +56,16 @@ const useEditPost = (
     })
   }, [])
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    try {
-      const uploadData = new FormData()
-      uploadData.append('file', file)
-      const res = await apiClient.post('/file', uploadData, { withCredentials: true })
-      setEditFormData((prev) => prev ? { ...prev, photo: res.data.url } : prev)
-    } catch {
-      setEditError('Failed to upload image. Please try again.')
-    }
-  }
+  const handleImageUpload = useCallback(async (_name: string, file: File) => {
+    const uploadData = new FormData()
+    uploadData.append('file', file)
+    const res = await apiClient.post('/file', uploadData, { withCredentials: true })
+    return res.data.url as string
+  }, [])
+
+  const handleImageUploadError = useCallback(() => {
+    setEditError('Failed to upload image. Please try again.')
+  }, [])
 
   const handleSubmit = useCallback(async () => {
     if (!editFormData || !editingPostId) return
@@ -115,26 +110,6 @@ const useEditPost = (
     ]
   }, [editFormData])
 
-  const uploadButton = (
-    <>
-      <button
-        type="button"
-        className="btn btn-outline-secondary"
-        onClick={() => fileInputRef.current?.click()}
-      >
-        <FontAwesomeIcon icon={faUpload} className="me-2" />
-        Upload Photo
-      </button>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        style={{ display: 'none' }}
-        onChange={handleFileSelect}
-      />
-    </>
-  )
-
   const renderEditForm = useCallback(() => {
     if (!editFormData) return null
     return (
@@ -149,13 +124,14 @@ const useEditPost = (
           onGroupItemRemove={noopGroupItemRemove}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
+          onImageUpload={handleImageUpload}
+          onImageUploadError={handleImageUploadError}
           submitLabel={isSubmitting ? 'Saving...' : 'Save'}
           cancelLabel="Cancel"
-          beforeActions={uploadButton}
         />
       </>
     )
-  }, [editFormData, editError, isSubmitting, handleFieldChange, handleSubmit, handleCancel, buildFields])
+  }, [editFormData, editError, isSubmitting, handleFieldChange, handleSubmit, handleCancel, handleImageUpload, handleImageUploadError, buildFields])
 
   return {
     editingPostId,
