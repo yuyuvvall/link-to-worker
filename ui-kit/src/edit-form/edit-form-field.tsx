@@ -72,7 +72,7 @@ const EditFormField = ({
           {required && <span className="edit-form-field__required"> *</span>}
         </div>
         <PreviewTag
-          className={`edit-form-field__image-preview${canUpload ? ' edit-form-field__image-preview--interactive' : ''}`}
+          className={`edit-form-field__image-preview${canUpload ? ' edit-form-field__image-preview--interactive' : ''}${hasImage ? ' edit-form-field__image-preview--has-image' : ''}`}
           aria-label={canUpload ? `Upload ${label}` : undefined}
           {...previewProps}
         >
