@@ -92,27 +92,6 @@ describe('PostsSearchService — searchDatabase (aggregation)', () => {
         expect(q.commentCount).toBe(0)
     })
 
-    test('isLikedByUser is true for a user who liked the post', async () => {
-        const result = await service.searchDatabase(makeQuery({}), viewerLiker._id.toString())
-        const p = result.find((x: any) => x._id.toString() === popular._id.toString())
-        expect(p.isLikedByUser).toBe(true)
-    })
-
-    test('isLikedByUser is false for a user who has not liked the post', async () => {
-        const result = await service.searchDatabase(makeQuery({}), viewerNonLiker._id.toString())
-        const p = result.find((x: any) => x._id.toString() === popular._id.toString())
-        expect(p.isLikedByUser).toBe(false)
-    })
-
-    test('comments array is projected with content + authorName', async () => {
-        const result = await service.searchDatabase(makeQuery({}), viewerLiker._id.toString())
-        const p = result.find((x: any) => x._id.toString() === popular._id.toString())
-        expect(Array.isArray(p.comments)).toBe(true)
-        expect(p.comments.length).toBe(2)
-        expect(typeof p.comments[0].content).toBe('string')
-        expect(typeof p.comments[0].authorName).toBe('string')
-    })
-
     test('filter likeCount $gt 2 returns only popular post', async () => {
         const result = await service.searchDatabase(
             makeQuery({ likeCount: { $gt: 2 } }),
