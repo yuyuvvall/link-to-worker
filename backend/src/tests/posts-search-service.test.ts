@@ -14,6 +14,8 @@ const makeQuery = (
 
 let popular: any
 let quiet: any
+let viewerLiker: any   // a user who HAS liked `popular`
+let viewerNonLiker: any // a user who has NOT liked `popular`
 
 beforeAll(async () => {
     await mongoose.connect(process.env.DB_CONNECTION as string)
@@ -39,7 +41,20 @@ beforeAll(async () => {
         content: 'Node.js and Express tutorial',
     })
 
-    for (let i = 0; i < 3; i++) {
+    viewerLiker = await User.create({
+        email: 'viewer-liker@example.com',
+        password: 'p',
+        username: 'viewerliker',
+    })
+    viewerNonLiker = await User.create({
+        email: 'viewer-nonliker@example.com',
+        password: 'p',
+        username: 'viewernonliker',
+    })
+
+    // 3 likes on popular: viewerLiker + 2 others. quiet has 0.
+    await Like.create({ postId: popular._id, userId: viewerLiker._id })
+    for (let i = 0; i < 2; i++) {
         const u = await User.create({
             email: `liker${i}@example.com`,
             password: 'p',
@@ -47,6 +62,8 @@ beforeAll(async () => {
         })
         await Like.create({ postId: popular._id, userId: u._id })
     }
+
+    // 2 comments on popular by `author`. quiet has 0.
     for (let i = 0; i < 2; i++) {
         await Comment.create({
             postId: popular._id,
@@ -66,7 +83,7 @@ afterAll(async () => {
 
 describe('PostsSearchService — searchDatabase (aggregation)', () => {
     test('empty filter projects likeCount and commentCount on every post', async () => {
-        const result = await service.searchDatabase(makeQuery({}))
+        const result = await service.searchDatabase(makeQuery({}), viewerLiker._id.toString())
         const p = result.find((x: any) => x._id.toString() === popular._id.toString())
         const q = result.find((x: any) => x._id.toString() === quiet._id.toString())
         expect(p.likeCount).toBe(3)
@@ -75,21 +92,49 @@ describe('PostsSearchService — searchDatabase (aggregation)', () => {
         expect(q.commentCount).toBe(0)
     })
 
+    test('isLikedByUser is true for a user who liked the post', async () => {
+        const result = await service.searchDatabase(makeQuery({}), viewerLiker._id.toString())
+        const p = result.find((x: any) => x._id.toString() === popular._id.toString())
+        expect(p.isLikedByUser).toBe(true)
+    })
+
+    test('isLikedByUser is false for a user who has not liked the post', async () => {
+        const result = await service.searchDatabase(makeQuery({}), viewerNonLiker._id.toString())
+        const p = result.find((x: any) => x._id.toString() === popular._id.toString())
+        expect(p.isLikedByUser).toBe(false)
+    })
+
+    test('comments array is projected with content + authorName', async () => {
+        const result = await service.searchDatabase(makeQuery({}), viewerLiker._id.toString())
+        const p = result.find((x: any) => x._id.toString() === popular._id.toString())
+        expect(Array.isArray(p.comments)).toBe(true)
+        expect(p.comments.length).toBe(2)
+        expect(typeof p.comments[0].content).toBe('string')
+        expect(typeof p.comments[0].authorName).toBe('string')
+    })
+
     test('filter likeCount $gt 2 returns only popular post', async () => {
-        const result = await service.searchDatabase(makeQuery({ likeCount: { $gt: 2 } }))
+        const result = await service.searchDatabase(
+            makeQuery({ likeCount: { $gt: 2 } }),
+            viewerLiker._id.toString()
+        )
         expect(result.length).toBe(1)
         expect(result[0]._id.toString()).toBe(popular._id.toString())
     })
 
     test('filter commentCount $gte 1 returns only popular post', async () => {
-        const result = await service.searchDatabase(makeQuery({ commentCount: { $gte: 1 } }))
+        const result = await service.searchDatabase(
+            makeQuery({ commentCount: { $gte: 1 } }),
+            viewerLiker._id.toString()
+        )
         expect(result.length).toBe(1)
         expect(result[0]._id.toString()).toBe(popular._id.toString())
     })
 
     test('content $regex still works', async () => {
         const result = await service.searchDatabase(
-            makeQuery({ content: { $regex: 'react', $options: 'i' } })
+            makeQuery({ content: { $regex: 'react', $options: 'i' } }),
+            viewerLiker._id.toString()
         )
         expect(result.length).toBe(1)
         expect(result[0].content.toLowerCase()).toContain('react')
@@ -97,18 +142,32 @@ describe('PostsSearchService — searchDatabase (aggregation)', () => {
 
     test('sort by likeCount desc returns popular first', async () => {
         const result = await service.searchDatabase(
-            makeQuery({}, { sort: { likeCount: -1 } })
+            makeQuery({}, { sort: { likeCount: -1 } }),
+            viewerLiker._id.toString()
         )
         expect(result[0]._id.toString()).toBe(popular._id.toString())
     })
 
     test('limit is respected', async () => {
-        const result = await service.searchDatabase(makeQuery({}, { limit: 1 }))
+        const result = await service.searchDatabase(
+            makeQuery({}, { limit: 1 }),
+            viewerLiker._id.toString()
+        )
         expect(result.length).toBe(1)
     })
 
     test('unsupported collection is rejected', async () => {
         const bogus = { collection: 'users' as any, filter: {}, limit: 10 }
-        await expect(service.searchDatabase(bogus)).rejects.toThrow()
+        await expect(
+            service.searchDatabase(bogus, viewerLiker._id.toString())
+        ).rejects.toThrow()
+    })
+
+    test('internal $lookup arrays are not leaked in projection', async () => {
+        const result = await service.searchDatabase(makeQuery({}), viewerLiker._id.toString())
+        for (const p of result) {
+            expect((p as any).likeCountData).toBeUndefined()
+            expect((p as any).userLike).toBeUndefined()
+        }
     })
 })

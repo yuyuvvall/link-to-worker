@@ -15,10 +15,21 @@ class PostController {
         this.ai_search = new PostsSearchService()
     }
 
-    async freeSearchPosts(req: Request, res: Response) {
-        const query = req.body.query
-        const postsResult = await this.ai_search.search_posts_free_text(query)
-        res.status(200).json(postsResult);
+    async freeSearchPosts(req: AuthenticatedRequest, res: Response) {
+        try {
+            if (!req.user || !req.user._id) {
+                return res.status(401).json({ msg: 'Not authorized' })
+            }
+            const query = req.body?.query
+            const postsResult = await this.ai_search.search_posts_free_text(
+                query,
+                req.user._id.toString()
+            )
+            return res.status(200).json(postsResult)
+        } catch (err: unknown) {
+            console.error('Failed AI search', err)
+            return res.status(500).json({ message: 'Search failed' })
+        }
     }
 
     async getPosts(req: AuthenticatedRequest, res: Response) {
