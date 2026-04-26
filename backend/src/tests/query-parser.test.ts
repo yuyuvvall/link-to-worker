@@ -15,44 +15,20 @@ describe('QueryParserService — buildFallbackQuery', () => {
     test('posts with more than 5 likes → posts, likes $gt 5', () => {
         const result = buildFallback('posts with more than 5 likes')
         expect(result.collection).toBe('posts')
-        expect(result.filter.likes).toEqual({ $gt: 5 })
+        expect(result.filter.likeCount).toEqual({ $gt: 5 })
         expect(result.limit).toBe(20)
     })
 
     test('posts with less than 3 likes → posts, likes $lt 3', () => {
         const result = buildFallback('posts with less than 3 likes')
         expect(result.collection).toBe('posts')
-        expect(result.filter.likes).toEqual({ $lt: 3 })
+        expect(result.filter.likeCount).toEqual({ $lt: 3 })
     })
 
     test('posts with more than 10 comments → posts, commentsCount $gt 10', () => {
         const result = buildFallback('posts with more than 10 comments')
         expect(result.collection).toBe('posts')
-        expect(result.filter.commentsCount).toEqual({ $gt: 10 })
-    })
-
-    test('users with more than 100 followers → users, followers $gt 100', () => {
-        const result = buildFallback('users with more than 100 followers')
-        expect(result.collection).toBe('users')
-        expect(result.filter.followers).toEqual({ $gt: 100 })
-    })
-
-    test('users older than 30 → users, age $gt 30', () => {
-        const result = buildFallback('users older than 30')
-        expect(result.collection).toBe('users')
-        expect(result.filter.age).toEqual({ $gt: 30 })
-    })
-
-    test('public posts → posts, isPublic: true', () => {
-        const result = buildFallback('public posts')
-        expect(result.collection).toBe('posts')
-        expect(result.filter.isPublic).toBe(true)
-    })
-
-    test('verified users → users, isVerified: true', () => {
-        const result = buildFallback('verified users')
-        expect(result.collection).toBe('users')
-        expect(result.filter.isVerified).toBe(true)
+        expect(result.filter.commentCount).toEqual({ $gt: 10 })
     })
 
     test('posts containing frontend → posts, content regex frontend', () => {
@@ -93,10 +69,9 @@ describe('QueryParserService — buildFallbackQuery', () => {
         expect(result.limit).toBe(20)
     })
 
-    test('combined: newest public posts limit 5', () => {
-        const result = buildFallback('newest public posts limit 5')
+    test('combined: newest posts limit 5', () => {
+        const result = buildFallback('newest posts limit 5')
         expect(result.collection).toBe('posts')
-        expect(result.filter.isPublic).toBe(true)
         expect(result.sort).toEqual({ createdAt: -1 })
         expect(result.limit).toBe(5)
     })
@@ -104,25 +79,6 @@ describe('QueryParserService — buildFallbackQuery', () => {
     test('query without user keyword defaults to posts collection', () => {
         const result = buildFallback('some search query')
         expect(result.collection).toBe('posts')
-    })
-
-    test('query with user keyword switches to users collection', () => {
-        const result = buildFallback('find all users')
-        expect(result.collection).toBe('users')
-    })
-
-    test('isPublic filter only applied to posts collection', () => {
-        // "public verified users" → collection = users (has "user"), isPublic should NOT be set
-        const result = buildFallback('public verified users')
-        expect(result.collection).toBe('users')
-        expect(result.filter.isPublic).toBeUndefined()
-    })
-
-    test('isVerified filter only applied to users collection', () => {
-        // "verified posts" → collection = posts (no "user" keyword), isVerified should NOT be set
-        const result = buildFallback('verified posts')
-        expect(result.collection).toBe('posts')
-        expect(result.filter.isVerified).toBeUndefined()
     })
 })
 
@@ -135,16 +91,20 @@ describe('QueryParserService — validateParsedQuery', () => {
     })
 
     test('valid success schema with sort returns parsed data', () => {
-        const input = { collection: 'users', filter: {}, sort: { createdAt: -1 }, limit: 10 }
+        const input = { collection: 'posts', filter: {}, sort: { createdAt: -1 }, limit: 10 }
         const result = validateParsed(input)
-        expect(result.collection).toBe('users')
+        expect(result.collection).toBe('posts')
         expect(result.sort).toEqual({ createdAt: -1 })
     })
 
-    test('valid error schema (LLM returned error) returns parsed data', () => {
+    test('LLM error response throws QueryValidationError', () => {
         const input = { error: 'Field does not exist' }
-        const result = validateParsed(input)
-        expect(result.error).toBe('Field does not exist')
+        expect(() => validateParsed(input)).toThrow(/error/i)
+    })
+
+    test('collection: "users" is rejected after narrowing', () => {
+        const input = { collection: 'users', filter: {}, limit: 20 }
+        expect(() => validateParsed(input)).toThrow('Invalid structure')
     })
 
     test('invalid collection name throws Error("Invalid structure")', () => {
