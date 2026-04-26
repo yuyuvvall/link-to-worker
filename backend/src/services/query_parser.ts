@@ -12,7 +12,7 @@ const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
 const SuccessSchema = z.object({
-  collection: z.enum(["posts", "users"]),
+  collection: z.literal("posts"),
   filter: z.record(z.string(), z.unknown()),
   sort: z
     .record(z.string(), z.union([z.literal(1), z.literal(-1)]))
@@ -282,15 +282,14 @@ Ensure the JSON is strictly valid and can be parsed by JSON.parse().
      * Validate parsed query structure and content
      */
     validateParsedQuery(llmoutput: any): MongoQueryResponse {
-        const parsed = MongoQuerySchema.safeParse(llmoutput);
-
+        const parsed = MongoQuerySchema.safeParse(llmoutput)
         if (!parsed.success) {
-            throw new Error("Invalid structure");
+            throw new Error("Invalid structure")
         }
-        if ("error" in parsed) {
-            throw new QueryValidationError("Invalid query llm return error");
+        if ("error" in parsed.data) {
+            throw new QueryValidationError(`LLM returned error: ${parsed.data.error}`)
         }
-        return parsed.data as MongoQueryResponse;
+        return parsed.data as MongoQueryResponse
     }
 
 
@@ -348,28 +347,22 @@ Respond with the allowed JSON format only:`;
      */
     private  buildFallbackQuery(userInput: string): MongoQuerySuccess {
         const text = userInput.toLowerCase();
-        let collection: CollectionName = "posts";
-      
-        if (text.includes("user")) {
-          collection = "users";
-        }
-      
+        const collection: CollectionName = "posts";
+
         const filter: Record<string, any> = {};
         const sort: Record<string, 1 | -1> = {};
-      
+
         const numericPatterns = [
-          { field: "likes", regex: /more than (\d+) likes?/ },
-          { field: "likes", regex: /less than (\d+) likes?/ },
-          { field: "commentsCount", regex: /more than (\d+) comments?/ },
-          { field: "followers", regex: /more than (\d+) followers?/ },
-          { field: "age", regex: /older than (\d+)/ }
+          { field: "likeCount", regex: /more than (\d+) likes?/ },
+          { field: "likeCount", regex: /less than (\d+) likes?/ },
+          { field: "commentCount", regex: /more than (\d+) comments?/ }
         ];
-      
+
         for (const pattern of numericPatterns) {
           const match = text.match(pattern.regex);
           if (match) {
             const value = Number(match[1]);
-      
+
             if (text.includes("less than")) {
               filter[pattern.field] = { $lt: value };
             } else {
@@ -377,19 +370,7 @@ Respond with the allowed JSON format only:`;
             }
           }
         }
-      
-        if (collection === "posts") {
-          if (text.includes("public")) {
-            filter.isPublic = true;
-          }
-        }
-      
-        if (collection === "users") {
-          if (text.includes("verified")) {
-            filter.isVerified = true;
-          }
-        }
-      
+
         const containsMatch = text.match(/containing (.+)/);
         if (containsMatch && collection === "posts") {
           filter.content = {
