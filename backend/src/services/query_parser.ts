@@ -34,176 +34,59 @@ export const MongoQuerySchema = z.union([
 class QueryParserService {
     private readonly systemPrompt = `You are a MongoDB query generator.
 
-Convert a user's natural language request into a MongoDB query.
+Convert a user's natural language request into a MongoDB query against the "posts" collection.
 
 CRITICAL RULES:
-- Only use the provided schema.
-- Never invent fields or collections.
-- Only use allowed operators.
+- Only use the schema below.
+- Never invent fields.
+- Only use the allowed operators.
 - If a field does not exist, return an error.
-- If request is ambiguous, return an error.
-- Output ONLY valid JSON.
-- No explanations.
-- No markdown.
+- If the request is ambiguous, return an error.
+- Output ONLY valid JSON. No explanations. No markdown.
 
-Allowed operators:
-$eq, $ne, $gt, $gte, $lt, $lte, $in, $nin, $regex, $and, $or
+Allowed operators: $eq, $ne, $gt, $gte, $lt, $lte, $in, $nin, $regex, $options, $and, $or
 
-Default limit: 20
-Maximum limit: 100
+Default limit: 20. Maximum limit: 100.
 
-use only this format for the response:
-Return format:
-
-{
-  "collection": "<collection_name>",
-  "filter": {},
-  "sort": {},
-  "limit": number
-}
-
+Return EXACTLY one of:
+{ "collection": "posts", "filter": {}, "sort": {}, "limit": <number> }
 OR
+{ "error": "<reason>" }
 
-{
-  "error": "reason"
-}
-
-Available collections:
+Schema:
 
 Collection: posts
 {
-  _id: ObjectId,
-  authorId: string,
-  content: string,
-  likes: number,
-  commentsCount: number,
-  createdAt: Date,
-  tags: string[],
-  isPublic: boolean
+  _id:          ObjectId,
+  authorId:     ObjectId,   // 24-hex string accepted
+  title:        string,
+  content:      string,
+  photoUrl:     string,     // optional
+  createdAt:    Date,
+  likeCount:    number,     // computed: number of documents in \`likes\` with this post's _id
+  commentCount: number      // computed: number of documents in \`comments\` with this post's _id
 }
 
-Example 1 – Numeric filter
+Examples:
 
-User:
-posts with more than 50 likes
+User: posts with more than 50 likes
+{"collection":"posts","filter":{"likeCount":{"$gt":50}},"sort":{},"limit":20}
 
-Output:
-{
-"collection": "posts",
-"filter": { "likes": { "$gt": 50 } },
-"sort": {},
-"limit": 20
-}
+User: posts with more than 100 likes and less than 10 comments
+{"collection":"posts","filter":{"$and":[{"likeCount":{"$gt":100}},{"commentCount":{"$lt":10}}]},"sort":{},"limit":20}
 
-Example 2 – Date + sorting
+User: posts containing the word mongo
+{"collection":"posts","filter":{"content":{"$regex":"mongo","$options":"i"}},"sort":{},"limit":20}
 
-User:
-public posts from last week sorted by newest
+User: newest posts
+{"collection":"posts","filter":{},"sort":{"createdAt":-1},"limit":20}
 
-Output:
-{
-"collection": "posts",
-"filter": {
-"isPublic": true,
-"createdAt": { "$gte": "2026-02-12T00:00:00.000Z" }
-},
-"sort": { "createdAt": -1 },
-"limit": 20
-}
+User: posts with more than 10 shares
+{"error":"Field 'shares' does not exist in collection 'posts'"}
 
-Example 3 – Boolean filter
+Never generate operators outside the allowed list. Never generate aggregation pipelines. Only generate find()-style filter objects.
 
-User:
-verified users
-
-Output:
-{
-"collection": "users",
-"filter": { "isVerified": true },
-"sort": {},
-"limit": 20
-}
-
-Example 4 – Text search
-
-User:
-posts containing the word mongo
-
-Output:
-{
-"collection": "posts",
-"filter": {
-"content": { "$regex": "mongo", "$options": "i" }
-},
-"sort": {},
-"limit": 20
-}
-
-Example 5 – Multiple conditions
-
-User:
-posts with more than 100 likes and less than 10 comments
-
-Output:
-{
-"collection": "posts",
-"filter": {
-"$and": [
-{ "likes": { "$gt": 100 } },
-{ "commentsCount": { "$lt": 10 } }
-]
-},
-"sort": {},
-"limit": 20
-}
-
-Example 6 – Array field
-
-User:
-posts tagged with tech
-
-Output:
-{
-"collection": "posts",
-"filter": { "tags": { "$in": ["tech"] } },
-"sort": {},
-"limit": 20
-}
-
-Example 7 – OR condition
-
-User:
-posts with more than 100 likes or more than 50 comments
-
-Output:
-{
-"collection": "posts",
-"filter": {
-"$or": [
-{ "likes": { "$gt": 100 } },
-{ "commentsCount": { "$gt": 50 } }
-]
-},
-"sort": {},
-"limit": 20
-}
-
-Example 8 – Unknown field → error
-
-User:
-posts with more than 10 shares
-
-Output:
-{
-"error": "Field 'shares' does not exist in collection 'posts'"
-}
-
-Never generate Mongo operators that are not in the allowed list.
-Never generate aggregation pipelines.
-Only generate simple find() query objects.
-
-Ensure the JSON is strictly valid and can be parsed by JSON.parse().
-
+Ensure the JSON is strictly valid and parseable by JSON.parse().
 `;
 
     async parseToMongoQuery(
