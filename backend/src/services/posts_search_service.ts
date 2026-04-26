@@ -1,26 +1,63 @@
-import { MongoQueryResponse } from "../types/search";
-import query_parser from "./query_parser";
-import Post from "../models/post_model";
+import { PipelineStage } from 'mongoose'
+import { MongoQueryResponse } from '../types/search'
+import query_parser from './query_parser'
+import Post from '../models/post_model'
 
 class PostsSearchService {
     async search_posts_free_text(query: string) {
-        try {
-            const parsed_query: MongoQueryResponse = await query_parser.parseToMongoQuery(query)
-            const posts = await this.searchDatabase(parsed_query);
-            return posts
-        } catch (error) {
-            console.error("Failed using ai search", error);
-            throw error;
+        const parsed = await query_parser.parseToMongoQuery(query)
+        return this.searchDatabase(parsed)
+    }
+
+    async searchDatabase(parsedQuery: MongoQueryResponse) {
+        if (parsedQuery.collection !== 'posts') {
+            throw new Error(`Unsupported collection: ${parsedQuery.collection}`)
         }
 
-    }
-    async searchDatabase(parsedQuery: MongoQueryResponse) {
-        try {
-            return await Post.find(parsedQuery.filter).limit(parsedQuery.limit)
-        } catch (error) {
-            console.error("Failed using ai search", error);
-            throw error;
-        } 
+        const pipeline: PipelineStage[] = [
+            {
+                $lookup: {
+                    from: 'likes',
+                    let: { postId: '$_id' },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ['$postId', '$$postId'] } } },
+                        { $count: 'count' },
+                    ],
+                    as: 'likeCountData',
+                },
+            },
+            {
+                $lookup: {
+                    from: 'comments',
+                    let: { postId: '$_id' },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ['$postId', '$$postId'] } } },
+                        { $count: 'count' },
+                    ],
+                    as: 'commentCountData',
+                },
+            },
+            {
+                $addFields: {
+                    likeCount: {
+                        $ifNull: [{ $arrayElemAt: ['$likeCountData.count', 0] }, 0],
+                    },
+                    commentCount: {
+                        $ifNull: [{ $arrayElemAt: ['$commentCountData.count', 0] }, 0],
+                    },
+                },
+            },
+            { $project: { likeCountData: 0, commentCountData: 0 } },
+            { $match: parsedQuery.filter as Record<string, unknown> },
+        ]
+
+        if (parsedQuery.sort && Object.keys(parsedQuery.sort).length > 0) {
+            pipeline.push({ $sort: parsedQuery.sort as Record<string, 1 | -1> })
+        }
+        pipeline.push({ $limit: parsedQuery.limit })
+
+        return Post.aggregate(pipeline)
     }
 }
+
 export default PostsSearchService
