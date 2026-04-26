@@ -9,7 +9,7 @@
     "prod": "tsc -p tsconfig_prod.json && pm2 restart ecosystem.config.js --env production",
     "prod1": "tsc -p tsconfig_prod.json && node --env-file=.env ./dist/app.js",
     "build": "tsc",
-    "test": "jest --runInBand --coverage --forceExit --detectOpenHandles --env dev"
+    "test": "jest --runInBand --coverage --forceExit --detectOpenHandles"
   },
   "keywords": [],
   "author": "",
